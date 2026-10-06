@@ -255,6 +255,7 @@ Nadie puede modificar ni borrar registros de auditoría.
 | `create_material(...)` | sí | Crea material (SKU automático opcional) y su existencia inicial en una sola transacción. Requiere `materials.manage` (ver ARCHITECTURE D-016). |
 | `post_inventory_receipt(...)` | sí | Registra una entrada con N líneas. |
 | `create_inventory_adjustment(...)` | sí | Ajuste positivo/negativo con motivo. |
+| `void_inventory_receipt(entrada, motivo)` | sí | Anula una entrada: una salida de reverso por línea al costo original (revierte el promedio). Todo o nada; requiere `inventory.void`. |
 | `get_dashboard_summary()` | sí | KPIs del dashboard en una sola llamada. |
 | `get_top_consumed_materials(desde, límite)` | sí | Materiales con mayor consumo + merma (por costo) desde una fecha; por defecto, el mes en curso. |
 | `reserve_material`, `release_reservation`, `consume_material`, `register_waste`, `change_work_order_status`, `close_work_order` | Fase 3 | Contratos definidos en BUSINESS_RULES. |
@@ -297,6 +298,7 @@ Todas con `security_invoker = true` (respetan RLS del usuario).
 | `…_005_future_remnants_attachments.sql` | Retazos y adjuntos. |
 | `…_006_views_dashboard.sql` | Vistas, `get_dashboard_summary` y `get_top_consumed_materials`. |
 | `…_007_rls_grants.sql` | Activación de RLS, grants por columna y políticas. |
+| `…_008_receipt_voiding.sql` | `void_inventory_receipt` (anulación de entradas). |
 
 **Regla para nuevas migraciones:** nunca editar una migración ya aplicada en un
 entorno; crear una nueva. Toda tabla nueva debe activar RLS y otorgar permisos

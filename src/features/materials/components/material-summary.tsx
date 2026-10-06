@@ -1,3 +1,5 @@
+import Link from "next/link";
+
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { formatDateTime, formatMoney, formatQuantityWithUnit } from "@/lib/format";
 import { cn } from "@/lib/utils";
@@ -55,7 +57,19 @@ export function MaterialDetails({ material }: { material: MaterialDetail }) {
     ["Categoría", material.category_name],
     ["Unidad base", `${material.unit_name} (${material.unit_symbol})`],
     ["Ubicación", material.location_name ?? "—"],
-    ["Proveedor principal", material.supplier_name ?? "—"],
+    [
+      "Proveedor principal",
+      material.primary_supplier_id ? (
+        <Link
+          href={`/suppliers/${material.primary_supplier_id}`}
+          className="text-primary hover:underline"
+        >
+          {material.supplier_name}
+        </Link>
+      ) : (
+        "—"
+      ),
+    ],
     [
       "Stock máximo",
       material.max_stock === null

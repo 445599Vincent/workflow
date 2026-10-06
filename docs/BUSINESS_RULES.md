@@ -55,7 +55,8 @@ COMPRA / ENTRADA → EXISTENCIA → RESERVA → ORDEN DE TRABAJO → CONSUMO REA
 | ENT-02 | Cada línea: material, cantidad, unidad, costo unitario, costo total (= cantidad × costo). |
 | ENT-03 | Registrar una entrada aumenta el stock físico (movimiento `entry`) y recalcula el promedio (CST-01). |
 | ENT-04 | v1: la unidad de la línea debe ser la unidad base del material (factor 1). La estructura ya guarda `unit_id`, `conversion_factor` y `base_quantity` para conversiones futuras (p. ej. comprar en rollos y controlar en m²). |
-| ENT-05 | Una entrada no se borra; se anula con motivo (Fase 2). La anulación genera salidas inversas y solo es posible si hay stock disponible suficiente. |
+| ENT-05 | Una entrada no se borra; se anula con motivo (permiso `inventory.void`). La anulación genera una salida inversa por línea al costo original (revierte el costo promedio) y solo es posible si hay stock disponible suficiente de **todos** los materiales; si no, no se anula nada. |
+| ENT-06 | La fecha de una entrada no puede ser futura. Cada línea debe respetar la precisión de la unidad del material (se valida en el formulario y en la BD). |
 
 ## 6. Órdenes de trabajo (OT)
 

@@ -268,6 +268,69 @@ select pg_temp.expect(
   (select array_agg(p order by p) @> array['inventory.allow_negative', 'users.manage'] from public.current_user_permissions() p),
   'current_user_permissions returns the role permissions');
 
+
+-- 5b. Voiding receipts (BR ENT-05) -------------------------------------------
+-- Still acting as admin. Vinil: 139.5 @ 320 before this block.
+insert into t_ids
+select 'receipt2', (public.post_inventory_receipt(
+  p_lines => jsonb_build_array(
+    jsonb_build_object('material_id', (select id from t_ids where key = 'vinil'), 'quantity', 10, 'unit_cost', 400)
+  )
+)).id;
+
+select pg_temp.expect(
+  (select stock_on_hand = 149.5 from public.materials where id = (select id from t_ids where key = 'vinil')),
+  'second receipt adds stock (139.5 + 10)');
+
+select public.void_inventory_receipt((select id from t_ids where key = 'receipt2'), 'Factura registrada dos veces');
+
+select pg_temp.expect(
+  (select stock_on_hand = 139.5 and avg_cost = 320
+     from public.materials where id = (select id from t_ids where key = 'vinil'))
+  and (select voided_at is not null and void_reason = 'Factura registrada dos veces'
+         from public.inventory_receipts where id = (select id from t_ids where key = 'receipt2')),
+  'voiding reverses stock and average cost at the original line cost');
+
+select pg_temp.expect(
+  exists (select 1 from public.inventory_movements
+           where movement_type = 'exit' and reference like 'Anulación ENT-%' and unit_cost = 400),
+  'voiding writes a reversing exit movement');
+
+select pg_temp.expect(
+  exists (select 1 from public.audit_logs where action = 'inventory.receipt.voided'),
+  'voiding is audited');
+
+select pg_temp.expect_error(
+  $$select public.void_inventory_receipt((select id from t_ids where key = 'receipt2'), 'Otra vez')$$,
+  '%ya fue anulada%');
+
+select pg_temp.expect_error(
+  $$select public.void_inventory_receipt((select id from public.inventory_receipts where number = 'ENT-000001'), '  ')$$,
+  '%motivo%');
+
+-- Tornillo is at -50 (authorised override): voiding its receipt would push it
+-- further down, so the whole void is rejected and nothing changes.
+select pg_temp.expect_error(
+  $$select public.void_inventory_receipt((select id from public.inventory_receipts where number = 'ENT-000001'), 'Prueba')$$,
+  '%Stock insuficiente%');
+
+select pg_temp.expect(
+  (select voided_at is null from public.inventory_receipts where number = 'ENT-000001')
+  and (select stock_on_hand = 139.5 from public.materials where id = (select id from t_ids where key = 'vinil')),
+  'a failed void changes nothing (all-or-nothing)');
+
+select pg_temp.act_as('00000000-0000-0000-0000-00000000000b'); -- warehouse
+
+select pg_temp.expect_error(
+  $$select public.void_inventory_receipt((select id from public.inventory_receipts where number = 'ENT-000001'), 'Sin permiso')$$,
+  '%No tiene permiso%');
+
+select pg_temp.expect_error(
+  $$update public.inventory_receipts set voided_at = now(), void_reason = 'directo'$$,
+  '%permission denied%');
+
+select pg_temp.act_as('00000000-0000-0000-0000-00000000000a'); -- back to admin
+
 -- 6. Work orders ------------------------------------------------------------------
 insert into public.work_orders (title, priority, due_date) values ('Letrero exterior Banco ABC', 'high', current_date - 3);
 
