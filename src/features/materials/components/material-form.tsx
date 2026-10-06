@@ -7,6 +7,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 
 import { FormError } from "@/components/shared/form-error";
 import { FormField } from "@/components/shared/form-field";
+import { QuantityInput } from "@/components/shared/quantity-input";
 import { SubmitButton } from "@/components/shared/submit-button";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -22,7 +23,7 @@ import { Switch } from "@/components/ui/switch";
 import { Textarea } from "@/components/ui/textarea";
 import { formatMoney } from "@/lib/format";
 import { applyActionErrors } from "@/lib/forms";
-import { cn } from "@/lib/utils";
+import { decimalsHint, exceedsDecimals } from "@/lib/validation";
 import { createMaterial, updateMaterial } from "../actions";
 import type { MaterialFormOptions } from "../queries";
 import { createMaterialSchema, updateMaterialSchema, type MaterialFormValues } from "../schemas";
@@ -76,9 +77,7 @@ export function MaterialForm(props: MaterialFormProps) {
   const unit = options.units.find((item) => item.id === baseUnitId);
   const unitSuffix = unit ? unit.symbol : "";
   const quantityHint = unit
-    ? unit.decimals === 0
-      ? `En ${unit.name.toLowerCase()} · solo números enteros`
-      : `En ${unit.name.toLowerCase()} · hasta ${unit.decimals} decimales`
+    ? `En ${unit.name.toLowerCase()} · ${decimalsHint(unit.decimals)}`
     : "Seleccione primero la unidad de medida";
   const openingTotal = Number(openingQuantity || 0) * Number(openingUnitCost || 0);
 
@@ -86,6 +85,14 @@ export function MaterialForm(props: MaterialFormProps) {
     setFormError(null);
     // Send the raw text values: the Server Action re-validates with the same schema.
     const values = form.getValues();
+    // Unit precision is enforced by the database too; flag it on the field first.
+    if (unit && values.openingQuantity && exceedsDecimals(values.openingQuantity, unit.decimals)) {
+      form.setError("openingQuantity", {
+        type: "precision",
+        message: `${unit.name}: ${decimalsHint(unit.decimals)}.`,
+      });
+      return;
+    }
     startTransition(async () => {
       const result =
         props.mode === "create"
@@ -384,28 +391,6 @@ export function MaterialForm(props: MaterialFormProps) {
         </SubmitButton>
       </div>
     </form>
-  );
-}
-
-function QuantityInput({
-  suffix,
-  className,
-  ...props
-}: React.ComponentProps<"input"> & { suffix?: string }) {
-  return (
-    <div className="relative">
-      <Input
-        inputMode="decimal"
-        autoComplete="off"
-        className={cn("tabular-nums", suffix && "pr-14", className)}
-        {...props}
-      />
-      {suffix && (
-        <span className="pointer-events-none absolute inset-y-0 right-3 flex items-center text-sm text-muted-foreground">
-          {suffix}
-        </span>
-      )}
-    </div>
   );
 }
 
