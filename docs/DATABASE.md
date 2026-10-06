@@ -252,10 +252,11 @@ Nadie puede modificar ni borrar registros de auditoría.
 | `current_user_permissions()` | sí | Lista de permisos del usuario actual (para la UI). |
 | `next_document_number(text)` | no | Siguiente número de documento. |
 | `apply_stock_movement(...)` | **no** | Motor interno: bloquea, valida, inserta movimiento, actualiza saldos y costo promedio. |
-| `create_material(...)` | sí | Crea material (SKU automático opcional) y su existencia inicial en una sola transacción. |
+| `create_material(...)` | sí | Crea material (SKU automático opcional) y su existencia inicial en una sola transacción. Requiere `materials.manage` (ver ARCHITECTURE D-016). |
 | `post_inventory_receipt(...)` | sí | Registra una entrada con N líneas. |
 | `create_inventory_adjustment(...)` | sí | Ajuste positivo/negativo con motivo. |
 | `get_dashboard_summary()` | sí | KPIs del dashboard en una sola llamada. |
+| `get_top_consumed_materials(desde, límite)` | sí | Materiales con mayor consumo + merma (por costo) desde una fecha; por defecto, el mes en curso. |
 | `reserve_material`, `release_reservation`, `consume_material`, `register_waste`, `change_work_order_status`, `close_work_order` | Fase 3 | Contratos definidos en BUSINESS_RULES. |
 
 ## 6. Vistas
@@ -278,7 +279,8 @@ Todas con `security_invoker = true` (respetan RLS del usuario).
 | customers | usuario activo | `customers.manage` | `customers.manage` | — |
 | materials | usuario activo | (RPC `create_material`) | `materials.manage` (sin saldos) | — |
 | inventory_* , material_*, waste_records | usuario activo | solo RPC | solo RPC | — |
-| work_orders, work_order_materials | usuario activo | `work_orders.manage` | `work_orders.manage` | — |
+| work_orders | usuario activo | `work_orders.manage` | `work_orders.manage` (estado/costos guardados por trigger) | — |
+| work_order_materials | usuario activo | `work_orders.manage` | `work_orders.manage` | `work_orders.manage`, solo líneas sin reservas, consumos ni mermas (dato de planificación, auditado) |
 | work_order_events | usuario activo | solo RPC/trigger | — | — |
 | app_settings, document_sequences | usuario activo | — | `settings.manage` | — |
 | audit_logs | `audit.view` | solo funciones | — | — |
@@ -292,9 +294,17 @@ Todas con `security_invoker = true` (respetan RLS del usuario).
 | `…_002_catalogs.sql` | Categorías, unidades, conversiones, ubicaciones, proveedores, clientes + datos base. |
 | `…_003_materials_inventory.sql` | Materiales, movimientos, entradas, ajustes, motor de stock y RPC de inventario. |
 | `…_004_work_orders.sql` | Órdenes, timeline, planificado, reservas, consumos, mermas. |
-| `…_005_future.sql` | Retazos y adjuntos. |
-| `…_006_views_rpc.sql` | Vistas y `get_dashboard_summary`. |
-| `…_007_rls.sql` | Activación de RLS, grants y políticas. |
+| `…_005_future_remnants_attachments.sql` | Retazos y adjuntos. |
+| `…_006_views_dashboard.sql` | Vistas, `get_dashboard_summary` y `get_top_consumed_materials`. |
+| `…_007_rls_grants.sql` | Activación de RLS, grants por columna y políticas. |
+
+**Regla para nuevas migraciones:** nunca editar una migración ya aplicada en un
+entorno; crear una nueva. Toda tabla nueva debe activar RLS y otorgar permisos
+explícitamente (007 revoca los privilegios por defecto).
+
+**Pruebas:** `supabase/tests/inventory_rules_test.sql` (requiere base sin
+semilla; corre en una transacción con `ROLLBACK`). En CI se ejecuta sobre
+PostgreSQL 17 con `supabase/tests/supabase_stub.sql`.
 
 `supabase/seed.sql` contiene datos de demostración (proveedores y materiales de
 ejemplo) y solo se ejecuta en desarrollo local (`supabase db reset`).

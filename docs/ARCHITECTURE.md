@@ -107,6 +107,7 @@ Consecuencias:
 ├── supabase/
 │   ├── config.toml               Config de Supabase CLI (desarrollo local)
 │   ├── migrations/               Migraciones SQL versionadas (fuente de verdad del esquema)
+│   ├── tests/                    Pruebas de reglas de BD + emulación mínima de Supabase para CI
 │   └── seed.sql                  Datos de demostración (solo desarrollo local)
 └── src/
     ├── proxy.ts                  Refresco de sesión + protección de rutas (antes "middleware")
@@ -205,6 +206,31 @@ líneas), los materiales se bloquean en orden de `id` para evitar interbloqueos.
 
 La matriz completa de permisos está en [BUSINESS_RULES.md](./BUSINESS_RULES.md#9-permisos).
 
+## 7.1 Validación y manejo de errores
+
+- **Formularios:** react-hook-form + el mismo esquema zod en cliente y Server
+  Action. Los números se editan como texto (`inputMode="decimal"`, mejor en
+  celulares que `type="number"`) y se convierten en el esquema
+  (`src/lib/validation.ts`).
+- **Server Actions** devuelven `ActionResult` (`ok` / `error` + `fieldErrors`);
+  ante éxito redirigen con `?notice=` para mostrar una confirmación.
+- **Errores de base de datos** (`src/lib/actions.ts → fromDatabaseError`): las
+  reglas de negocio se lanzan en PL/pgSQL con mensajes en español
+  (`SQLSTATE P0001`) y se muestran tal cual; los demás códigos (`42501`, `23505`,
+  `23503`…) se traducen a mensajes comprensibles; lo inesperado se registra en el
+  servidor y el usuario ve un mensaje genérico.
+- **Páginas:** `error.tsx` (reintentar), `not-found.tsx`, `loading.tsx` con
+  skeletons y estados vacíos con una acción clara.
+
+## 7.2 Pruebas
+
+| Nivel | Qué | Dónde |
+|-------|-----|-------|
+| Base de datos | 42 aserciones: permisos, RLS, stock negativo, costo promedio, inmutabilidad, ciclo de vida de OT | `supabase/tests/inventory_rules_test.sql` (CI) |
+| Concurrencia | Dos sesiones retirando el mismo material: la segunda espera el bloqueo y es rechazada con el saldo actualizado | Verificado manualmente; ver §6 |
+| Aplicación | Formato, lint, typecheck y build | CI |
+| Extremo a extremo | Login, dashboard, materias primas (crear/editar/filtrar), permisos del rol Consulta, móvil | Verificado con Playwright contra GoTrue + PostgREST locales; automatizar en Fase 2 |
+
 ## 8. Integración futura con ADM Cloud
 
 No se asume que ADM Cloud tenga API. Se prepara únicamente:
@@ -236,3 +262,7 @@ No se asume que ADM Cloud tenga API. Se prepara únicamente:
 | D-013 | Sin borrado físico de información crítica: sin políticas `DELETE`; anulación con motivo; triggers que bloquean `UPDATE/DELETE` en el libro mayor. | Auditoría obligatoria. |
 | D-014 | Moneda única RD$ (DOP) configurable en `app_settings`. Cantidades `numeric(14,4)`, costos `numeric(18,4)`. | Precisión suficiente para m², ml y costos unitarios pequeños. |
 | D-015 | Los componentes shadcn/ui se mantienen en el repositorio (`src/components/ui`). | Es el modelo de shadcn; no depende del registro en tiempo de build. |
+| D-016 | La existencia inicial al crear un material se registra con el permiso `materials.manage` (no requiere `inventory.adjust`). Queda como ajuste `is_opening_balance = true`. | Almacén debe poder cargar el inventario inicial; los ajustes posteriores siguen restringidos a supervisor/admin. |
+| D-017 | `last_cost` toma el costo de la existencia inicial mientras no haya compras (BR CST-02). | Evita mostrar RD$0.00 como último costo de materiales recién cargados. |
+| D-018 | Agregaciones del dashboard en funciones SQL (`get_dashboard_summary`, `get_top_consumed_materials`). | Una sola consulta por indicador; no se envían movimientos al navegador. |
+| D-019 | Listados con filtros, orden y paginación en la URL, resueltos en el servidor. | Enlaces compartibles, botón "atrás" funcional y escalable a miles de materiales. |
