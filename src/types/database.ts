@@ -1796,7 +1796,7 @@ export type Database = {
           external_id?: string | null;
           external_source?: string | null;
           id?: string;
-          number: string;
+          number?: string;
           priority?: Database["public"]["Enums"]["work_order_priority"];
           responsible_id?: string | null;
           started_at?: string | null;

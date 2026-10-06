@@ -241,6 +241,10 @@ begin
 end;
 $$;
 
+-- The number is always assigned by the lifecycle trigger; the placeholder
+-- default lets clients insert without it (they have no grant on the column).
+alter table public.work_orders alter column number set default '';
+
 -- Status only changes through change_work_order_status (D-025).
 revoke update (status, cancel_reason) on public.work_orders from authenticated;
 
