@@ -44,7 +44,7 @@ export const NAV_GROUPS: NavGroup[] = [
       { href: "/materials", label: "Materias primas", icon: PackageIcon },
       { href: "/movements", label: "Movimientos", icon: ArrowLeftRightIcon, comingSoon: true },
       { href: "/receipts", label: "Compras / Entradas", icon: PackagePlusIcon, comingSoon: true },
-      { href: "/suppliers", label: "Proveedores", icon: TruckIcon, comingSoon: true },
+      { href: "/suppliers", label: "Proveedores", icon: TruckIcon },
     ],
   },
   {

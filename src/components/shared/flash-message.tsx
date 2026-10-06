@@ -9,6 +9,10 @@ const NOTICES: Record<string, string> = {
   "password-updated": "Contraseña actualizada correctamente.",
   "material-created": "Material creado correctamente.",
   "material-updated": "Cambios guardados.",
+  "supplier-created": "Proveedor creado correctamente.",
+  "supplier-updated": "Cambios guardados.",
+  "receipt-posted": "Entrada registrada. El inventario se actualizó.",
+  "receipt-voided": "Entrada anulada. El inventario se revirtió.",
 };
 
 export function FlashMessage() {
