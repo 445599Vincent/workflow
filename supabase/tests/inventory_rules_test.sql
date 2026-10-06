@@ -3,6 +3,8 @@
 --
 -- Exercises permissions, RLS, the stock engine and immutability rules.
 -- Runs inside a single transaction and ROLLS BACK: safe on a dev database.
+-- Expects freshly applied migrations WITHOUT seed data (it asserts document
+-- numbers such as MAT-0001 and OT-000001).
 --
 --   psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f supabase/tests/inventory_rules_test.sql
 --

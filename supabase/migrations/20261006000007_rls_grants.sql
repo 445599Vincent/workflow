@@ -251,6 +251,7 @@ grant execute on function public.is_active_user() to authenticated;
 grant execute on function public.has_permission(text) to authenticated;
 grant execute on function public.current_user_permissions() to authenticated;
 grant execute on function public.get_dashboard_summary() to authenticated;
+grant execute on function public.get_top_consumed_materials(timestamptz, integer) to authenticated;
 grant execute on function public.create_material(text, uuid, uuid, text, text, numeric, numeric, uuid, uuid, boolean, numeric, numeric) to authenticated;
 grant execute on function public.post_inventory_receipt(jsonb, date, uuid, text, text) to authenticated;
 grant execute on function public.create_inventory_adjustment(uuid, public.movement_type, numeric, text, numeric, text, boolean) to authenticated;

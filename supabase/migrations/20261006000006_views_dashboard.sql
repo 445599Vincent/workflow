@@ -131,3 +131,41 @@ as $$
     'month_start',          (select month_start from period)
   );
 $$;
+
+-- Materials with the highest usage (consumption + waste) since p_from.
+create or replace function public.get_top_consumed_materials(
+  p_from  timestamptz default null,
+  p_limit integer default 5
+)
+returns table (
+  material_id   uuid,
+  sku           text,
+  name          text,
+  unit_symbol   text,
+  unit_decimals smallint,
+  quantity      numeric,
+  total_cost    numeric
+)
+language sql
+stable
+set search_path = ''
+as $$
+  with settings as (
+    select coalesce(
+      (select s.value #>> '{}' from public.app_settings s where s.key = 'timezone'),
+      'America/Santo_Domingo'
+    ) as tz
+  )
+  select m.id, m.sku, m.name, u.symbol, u.decimals,
+         sum(mv.quantity)                as quantity,
+         coalesce(sum(mv.total_cost), 0) as total_cost
+  from public.inventory_movements mv
+  join public.materials m on m.id = mv.material_id
+  join public.units u on u.id = m.base_unit_id
+  cross join settings st
+  where mv.movement_type in ('consumption', 'waste')
+    and mv.occurred_at >= coalesce(p_from, date_trunc('month', now() at time zone st.tz) at time zone st.tz)
+  group by m.id, m.sku, m.name, u.symbol, u.decimals
+  order by total_cost desc, quantity desc
+  limit greatest(1, least(coalesce(p_limit, 5), 50));
+$$;

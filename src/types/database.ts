@@ -2102,6 +2102,18 @@ export type Database = {
       };
       current_user_permissions: { Args: Record<PropertyKey, never>; Returns: string[] };
       get_dashboard_summary: { Args: Record<PropertyKey, never>; Returns: Json };
+      get_top_consumed_materials: {
+        Args: { p_from?: string; p_limit?: number };
+        Returns: {
+          material_id: string;
+          name: string;
+          quantity: number;
+          sku: string;
+          total_cost: number;
+          unit_decimals: number;
+          unit_symbol: string;
+        }[];
+      };
       has_permission: { Args: { p_permission: string }; Returns: boolean };
       is_active_user: { Args: Record<PropertyKey, never>; Returns: boolean };
       log_audit_event: {
