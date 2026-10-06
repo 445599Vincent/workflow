@@ -676,6 +676,61 @@ select pg_temp.expect(
          from public.report_monthly_trend() order by month desc limit 1),
   'monthly trend: six months, current month without voided usage');
 
+-- 6f. Material import (MAT-01…05, D-033) ------------------------------------------
+select pg_temp.act_as('00000000-0000-0000-0000-00000000000b'); -- warehouse (materials.manage)
+
+select pg_temp.expect(
+  public.import_materials(jsonb_build_array(
+    jsonb_build_object('line', 2, 'sku', 'imp-lona', 'name', 'Lona frontlit 13 oz',
+      'category_id', (select id from t_ids where key = 'cat'), 'base_unit_id', (select id from t_ids where key = 'm2'),
+      'min_stock', 20, 'max_stock', 200, 'opening_quantity', 50.5, 'opening_unit_cost', 85),
+    jsonb_build_object('line', 3, 'name', 'Remache pop 1/8',
+      'category_id', (select id from t_ids where key = 'cat'), 'base_unit_id', (select id from t_ids where key = 'und'),
+      'tracks_remnants', false)
+  )) = 2,
+  'import_materials creates every row and returns the count');
+
+select pg_temp.expect(
+  (select stock_on_hand = 50.5 and avg_cost = 85 and last_cost = 85 and min_stock = 20 and max_stock = 200
+     from public.materials where sku = 'IMP-LONA')
+  and exists (select 1 from public.inventory_adjustments a join public.materials m on m.id = a.material_id
+               where m.sku = 'IMP-LONA' and a.is_opening_balance and a.quantity = 50.5)
+  and (select sku like 'MAT-%' and stock_on_hand = 0 from public.materials where name = 'Remache pop 1/8'),
+  'imported rows get normalised or automatic SKUs and their opening balance');
+
+select pg_temp.act_as('00000000-0000-0000-0000-00000000000a'); -- admin: audit.view
+select pg_temp.expect(
+  (select count(*) = 1 from public.audit_logs where action = 'materials.import' and (new_data ->> 'count')::int = 2),
+  'the import is recorded once in the audit log');
+select pg_temp.act_as('00000000-0000-0000-0000-00000000000b'); -- warehouse
+
+-- All or nothing: the second row fails, so the first is not created either.
+select pg_temp.expect_error(
+  $$select public.import_materials(jsonb_build_array(
+      jsonb_build_object('line', 2, 'name', 'No debe quedar',
+        'category_id', (select id from t_ids where key = 'cat'), 'base_unit_id', (select id from t_ids where key = 'und')),
+      jsonb_build_object('line', 3, 'sku', 'IMP-LONA', 'name', 'Duplicada',
+        'category_id', (select id from t_ids where key = 'cat'), 'base_unit_id', (select id from t_ids where key = 'm2'))))$$,
+  'Fila 3: Ya existe un material con el código IMP-LONA%');
+select pg_temp.expect(
+  not exists (select 1 from public.materials where name = 'No debe quedar'),
+  'a failed import creates nothing');
+
+select pg_temp.expect_error(
+  $$select public.import_materials(jsonb_build_array(
+      jsonb_build_object('line', 7, 'name', 'Tornillo fraccionado',
+        'category_id', (select id from t_ids where key = 'cat'), 'base_unit_id', (select id from t_ids where key = 'und'),
+        'opening_quantity', 2.5, 'opening_unit_cost', 3)))$$,
+  'Fila 7: La cantidad de Tornillo fraccionado admite como máximo 0 decimales%');
+
+select pg_temp.expect_error($$select public.import_materials('[]'::jsonb)$$, '%no tiene materiales%');
+
+select pg_temp.act_as('00000000-0000-0000-0000-00000000000c'); -- production
+select pg_temp.expect_error(
+  $$select public.import_materials(jsonb_build_array(jsonb_build_object('name', 'X',
+      'category_id', (select id from t_ids where key = 'cat'), 'base_unit_id', (select id from t_ids where key = 'und'))))$$,
+  '%No tiene permiso%');
+
 select pg_temp.act_as('00000000-0000-0000-0000-00000000000a'); -- admin
 
 -- Ledger invariants after all the activity.
