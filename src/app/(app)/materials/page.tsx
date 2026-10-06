@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { PackageIcon, PackageSearchIcon, PlusIcon } from "lucide-react";
+import { FileUpIcon, PackageIcon, PackageSearchIcon, PlusIcon } from "lucide-react";
 
 import { EmptyState } from "@/components/shared/empty-state";
 import { PageHeader } from "@/components/shared/page-header";
@@ -29,12 +29,20 @@ export default async function MaterialsPage({ searchParams }: PageProps<"/materi
         description="Catálogo de materiales con su existencia física, reservada y disponible."
         actions={
           canManage && (
-            <Button asChild>
-              <Link href="/materials/new">
-                <PlusIcon />
-                Nuevo material
-              </Link>
-            </Button>
+            <>
+              <Button variant="outline" asChild>
+                <Link href="/materials/import">
+                  <FileUpIcon />
+                  Importar
+                </Link>
+              </Button>
+              <Button asChild>
+                <Link href="/materials/new">
+                  <PlusIcon />
+                  Nuevo material
+                </Link>
+              </Button>
+            </>
           )
         }
       />

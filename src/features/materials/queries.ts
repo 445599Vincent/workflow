@@ -169,3 +169,31 @@ export async function listMaterialOptions() {
 }
 
 export type MaterialOption = Awaited<ReturnType<typeof listMaterialOptions>>[number];
+
+/** Catalogs and existing codes to check an import file before sending it (IMP-05). */
+export async function getImportCatalogs() {
+  const supabase = await createClient();
+  const [units, categories, locations, suppliers, materials] = await Promise.all([
+    supabase.from("units").select("code, symbol, name, decimals").eq("is_active", true),
+    supabase.from("categories").select("name"),
+    supabase.from("locations").select("code, name"),
+    supabase.from("suppliers").select("code, name").eq("is_active", true),
+    supabase.from("materials").select("sku"),
+  ]);
+  const failed = [units, categories, locations, suppliers, materials].find(
+    (result) => result.error,
+  );
+  if (failed?.error)
+    throw new Error(`No se pudieron cargar los catálogos: ${failed.error.message}`);
+
+  return {
+    units: units.data ?? [],
+    categories: (categories.data ?? []).map((row) => row.name),
+    locations: (locations.data ?? []).flatMap((row) => [row.code, row.name]),
+    suppliers: (suppliers.data ?? []).flatMap((row) =>
+      row.code ? [row.code, row.name] : [row.name],
+    ),
+    skus: (materials.data ?? []).map((row) => row.sku),
+  };
+}
+export type ImportCatalogs = Awaited<ReturnType<typeof getImportCatalogs>>;

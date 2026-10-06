@@ -3,7 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 
-import { fromDatabaseError, validationFailed, type ActionResult } from "@/lib/actions";
+import { fail, fromDatabaseError, validationFailed, type ActionResult } from "@/lib/actions";
 import { createClient } from "@/lib/supabase/server";
 import {
   createMaterialSchema,
@@ -11,6 +11,7 @@ import {
   type CreateMaterialFormValues,
   type UpdateMaterialFormValues,
 } from "./schemas";
+import { importPayloadSchema, type ImportPayload } from "./import";
 
 /**
  * Creates the material and, when given, its opening stock in one database
@@ -81,4 +82,27 @@ export async function updateMaterial(
   revalidatePath(`/materials/${id}`);
   revalidatePath("/dashboard");
   redirect(`/materials/${id}?notice=material-updated`);
+}
+
+/**
+ * Bulk import (IMP, D-033). The RPC validates every row and creates all the
+ * materials in one transaction, or none.
+ */
+export async function importMaterials(payload: ImportPayload): Promise<ActionResult> {
+  const parsed = importPayloadSchema.safeParse(payload);
+  if (!parsed.success) return fail("El archivo tiene datos con un formato inválido.");
+
+  const supabase = await createClient();
+  const { data, error } = await supabase.rpc("import_materials", {
+    p_rows: parsed.data.rows,
+    p_create_catalogs: parsed.data.createCatalogs,
+  });
+  if (error) return fromDatabaseError(error);
+
+  revalidatePath("/materials", "layout");
+  revalidatePath("/inventory");
+  revalidatePath("/movements");
+  revalidatePath("/dashboard");
+  revalidatePath("/settings", "layout");
+  redirect(`/materials?notice=materials-imported&count=${data}`);
 }

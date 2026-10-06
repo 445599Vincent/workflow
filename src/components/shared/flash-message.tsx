@@ -8,6 +8,7 @@ import { toast } from "sonner";
 const NOTICES: Record<string, string> = {
   "password-updated": "Contraseña actualizada correctamente.",
   "material-created": "Material creado correctamente.",
+  "materials-imported": "Materiales importados correctamente.",
   "material-updated": "Cambios guardados.",
   "supplier-created": "Proveedor creado correctamente.",
   "supplier-updated": "Cambios guardados.",
