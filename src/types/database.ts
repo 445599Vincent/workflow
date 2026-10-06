@@ -1985,6 +1985,20 @@ export type Database = {
           },
         ];
       };
+      usage_records: {
+        Row: {
+          id: string | null;
+          kind: string | null;
+          material_id: string | null;
+          occurred_at: string | null;
+          quantity: number | null;
+          reason: Database["public"]["Enums"]["waste_reason"] | null;
+          total_cost: number | null;
+          unit_cost: number | null;
+          work_order_id: string | null;
+        };
+        Relationships: [];
+      };
     };
     Functions: {
       apply_stock_movement: {
@@ -2034,6 +2048,10 @@ export type Database = {
           isOneToOne: true;
           isSetofReturn: false;
         };
+      };
+      business_period: {
+        Args: { p_from?: string; p_to?: string };
+        Returns: { period_end: string; period_start: string }[];
       };
       change_work_order_status: {
         Args: {
@@ -2190,6 +2208,18 @@ export type Database = {
         };
       };
       get_dashboard_summary: { Args: Record<PropertyKey, never>; Returns: Json };
+      get_alerts: {
+        Args: Record<PropertyKey, never>;
+        Returns: {
+          detail: string;
+          entity_id: string;
+          kind: string;
+          metric: number;
+          reference: string;
+          severity: string;
+          title: string;
+        }[];
+      };
       get_top_consumed_materials: {
         Args: { p_from?: string; p_limit?: number };
         Returns: {
@@ -2282,6 +2312,49 @@ export type Database = {
         };
       };
       refresh_work_order_actual_cost: { Args: { p_work_order_id: string }; Returns: undefined };
+      report_orders_cost: {
+        Args: { p_from?: string; p_to?: string };
+        Returns: {
+          actual_cost: number;
+          completed_at: string;
+          customer_name: string;
+          estimated_cost: number;
+          number: string;
+          title: string;
+          variance: number;
+          variance_pct: number;
+          waste_cost: number;
+          work_order_id: string;
+        }[];
+      };
+      report_usage_by_customer: {
+        Args: { p_from?: string; p_to?: string };
+        Returns: {
+          consumed_cost: number;
+          customer_id: string;
+          customer_name: string;
+          orders: number;
+          total_cost: number;
+          waste_cost: number;
+        }[];
+      };
+      report_usage_by_material: {
+        Args: { p_from?: string; p_to?: string };
+        Returns: {
+          category: string;
+          consumed_cost: number;
+          consumed_quantity: number;
+          material_id: string;
+          name: string;
+          sku: string;
+          total_cost: number;
+          unit_decimals: number;
+          unit_symbol: string;
+          waste_cost: number;
+          waste_pct: number;
+          waste_quantity: number;
+        }[];
+      };
       register_warehouse_waste: {
         Args: {
           p_material_id: string;

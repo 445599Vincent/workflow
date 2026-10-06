@@ -639,6 +639,39 @@ select pg_temp.expect_error(
       (select id from public.material_consumptions where voided_at is null and material_id = (select id from t_ids where key = 'vinil')), 'Tarde')$$,
   '%no admite esta operación%');
 
+-- 6e. Reports, alerts and dashboard ignore voided usage (REP-01, D-030) ----------
+select pg_temp.act_as('00000000-0000-0000-0000-00000000000d'); -- viewer: reports are read-only for everyone
+
+select pg_temp.expect(
+  (select consumed_quantity = 1 and consumed_cost = 320 and waste_quantity = 0 and total_cost = 320
+     from public.report_usage_by_material() where sku = 'MAT-0001')
+  and (select consumed_quantity = 2 and total_cost = 200 from public.report_usage_by_material() where name = 'Perfil de aluminio'),
+  'usage by material counts only records that are not voided');
+
+select pg_temp.expect(
+  (select actual_cost = 520 and waste_cost = 0 and variance = actual_cost - estimated_cost
+     from public.report_orders_cost() where work_order_id = (select id from t_ids where key = 'ot1')),
+  'order cost report lists the completed order with estimated vs actual');
+
+select pg_temp.expect(
+  (select sum(total_cost) = 520 from public.report_usage_by_customer()),
+  'usage by customer adds up to the orders usage (warehouse waste excluded)');
+
+select pg_temp.expect(
+  (select (s ->> 'consumption_cost_month')::numeric = 520 and (s ->> 'waste_cost_month')::numeric = 0
+     from public.get_dashboard_summary() s),
+  'dashboard month costs exclude voided consumption and waste');
+
+select pg_temp.expect(
+  exists (select 1 from public.get_alerts() where kind = 'low_stock' and reference = 'TOR-14' and severity = 'critical'),
+  'alerts flag materials without available stock as critical');
+
+select pg_temp.expect(
+  (select count(*) = 0 from public.report_usage_by_material(current_date - 40, current_date - 35)),
+  'reports respect the period');
+
+select pg_temp.act_as('00000000-0000-0000-0000-00000000000a'); -- admin
+
 -- Ledger invariants after all the activity.
 select pg_temp.expect(
   (select bool_and(m.stock_on_hand = coalesce(l.on_hand, 0) and m.stock_reserved = coalesce(l.reserved, 0))
@@ -658,6 +691,7 @@ select pg_temp.expect(
 select pg_temp.act_as_system();
 set local role anon;
 select pg_temp.expect_error($$select count(*) from public.materials$$, '%permission denied%');
+select pg_temp.expect_error($$select count(*) from public.get_alerts()$$, '%permission denied%');
 reset role;
 
 rollback;
