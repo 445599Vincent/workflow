@@ -1,3 +1,4 @@
+import { toCsv } from "@/lib/csv";
 import { formatMoney, formatPercent, formatQuantity, formatDateTime } from "@/lib/format";
 import type { Database } from "@/types/database";
 import type { Report } from "./queries";
@@ -255,26 +256,15 @@ export function buildReportTable(report: Report): ReportTable {
   }
 }
 
-// -----------------------------------------------------------------------------
-// CSV (D-031): UTF-8 with BOM so Excel shows accents; comma; dot decimals.
-// -----------------------------------------------------------------------------
-function csvField(value: string | number | null): string {
-  if (value === null) return "";
-  const text = String(value);
-  return /[",\n\r]/.test(text) ? `"${text.replaceAll('"', '""')}"` : text;
-}
-
 export function reportToCsv(table: ReportTable): string {
-  const lines = [
-    table.columns.map((column) => csvField(column.header)).join(","),
-    ...table.rows.map((row) => row.map((cell) => csvField(cell.raw)).join(",")),
-  ];
+  const rows: (string | number | null)[][] = table.rows.map((row) => row.map((cell) => cell.raw));
   if (table.rawTotals) {
-    lines.push(
-      table.rawTotals.map((value, index) => csvField(index === 0 ? "Total" : value)).join(","),
-    );
+    rows.push(table.rawTotals.map((value, index) => (index === 0 ? "Total" : value)));
   }
-  return `﻿${lines.join("\r\n")}\r\n`;
+  return toCsv(
+    table.columns.map((column) => column.header),
+    rows,
+  );
 }
 
 export function reportFileName(view: ReportView, from: string, to: string) {

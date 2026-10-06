@@ -1,10 +1,11 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { ScissorsIcon, SearchXIcon } from "lucide-react";
+import { DownloadIcon, ScissorsIcon, SearchXIcon } from "lucide-react";
 
 import { EmptyState } from "@/components/shared/empty-state";
 import { PageHeader } from "@/components/shared/page-header";
 import { Pagination } from "@/components/shared/pagination";
+import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { WarehouseWasteDialog } from "@/features/inventory/components/warehouse-waste-dialog";
 import { WasteFilters } from "@/features/inventory/components/waste-filters";
@@ -14,6 +15,7 @@ import { WASTE_PAGE_SIZE, parseWasteListParams } from "@/features/inventory/sche
 import { listMaterialOptions } from "@/features/materials/queries";
 import { can, requireUser } from "@/lib/auth/session";
 import { formatMoney } from "@/lib/format";
+import { buildHref } from "@/lib/url";
 
 export const metadata: Metadata = { title: "Mermas" };
 
@@ -37,7 +39,20 @@ export default async function WastePage({ searchParams }: PageProps<"/movements/
         }
         title="Mermas"
         description="Desperdicio de las órdenes de trabajo y del almacén. Las anuladas se muestran tachadas."
-        actions={canRegister && <WarehouseWasteDialog materials={materials} />}
+        actions={
+          <>
+            <Button variant="outline" asChild>
+              <a
+                href={buildHref("/movements/waste/export", { ...params }, { page: null })}
+                download
+              >
+                <DownloadIcon />
+                Exportar CSV
+              </a>
+            </Button>
+            {canRegister && <WarehouseWasteDialog materials={materials} />}
+          </>
+        }
       />
 
       <WasteFilters />

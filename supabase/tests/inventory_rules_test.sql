@@ -670,6 +670,12 @@ select pg_temp.expect(
   (select count(*) = 0 from public.report_usage_by_material(current_date - 40, current_date - 35)),
   'reports respect the period');
 
+select pg_temp.expect(
+  (select count(*) = 6 from public.report_monthly_trend())
+  and (select consumed_cost = 520 and waste_cost = 0 and completed_orders = 1 and actual_cost = 520
+         from public.report_monthly_trend() order by month desc limit 1),
+  'monthly trend: six months, current month without voided usage');
+
 select pg_temp.act_as('00000000-0000-0000-0000-00000000000a'); -- admin
 
 -- Ledger invariants after all the activity.

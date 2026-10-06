@@ -10,8 +10,10 @@ import { KpiGrid } from "@/features/dashboard/components/kpi-grid";
 import { RecentOrdersCard } from "@/features/dashboard/components/recent-orders-card";
 import { StockAlertsCard } from "@/features/dashboard/components/stock-alerts-card";
 import { TopConsumptionCard } from "@/features/dashboard/components/top-consumption-card";
+import { TrendCharts } from "@/features/dashboard/components/trend-charts";
 import {
   getDashboardSummary,
+  getMonthlyTrend,
   getRecentWorkOrders,
   getStockAlerts,
   getTopConsumedMaterials,
@@ -23,12 +25,13 @@ export const metadata: Metadata = { title: "Dashboard" };
 
 export default async function DashboardPage() {
   const user = await requireUser();
-  const [summary, alerts, orders, topConsumed, allAlerts] = await Promise.all([
+  const [summary, alerts, orders, topConsumed, allAlerts, trend] = await Promise.all([
     getDashboardSummary(),
     getStockAlerts(),
     getRecentWorkOrders(),
     getTopConsumedMaterials(),
     getAlerts(),
+    getMonthlyTrend(),
   ]);
   const firstName = user.fullName.split(" ")[0];
   const today = formatLongDate();
@@ -59,6 +62,7 @@ export default async function DashboardPage() {
         <StockAlertsCard alerts={alerts} />
         <RecentOrdersCard orders={orders} />
       </div>
+      <TrendCharts trend={trend} />
       <TopConsumptionCard rows={topConsumed} />
     </div>
   );

@@ -55,3 +55,12 @@ export async function getTopConsumedMaterials(limit = 5) {
   if (error) throw new Error(`No se pudo cargar el consumo: ${error.message}`);
   return data;
 }
+
+/** REP-08: last six business months (voided usage excluded). */
+export async function getMonthlyTrend(months = 6) {
+  const supabase = await createClient();
+  const { data, error } = await supabase.rpc("report_monthly_trend", { p_months: months });
+  if (error) throw new Error(`No se pudo cargar la tendencia mensual: ${error.message}`);
+  return data;
+}
+export type MonthlyTrend = Awaited<ReturnType<typeof getMonthlyTrend>>;
