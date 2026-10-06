@@ -67,6 +67,17 @@ COMPRA / ENTRADA → EXISTENCIA → RESERVA → ORDEN DE TRABAJO → CONSUMO REA
 | AJU-03 | Un ajuste negativo no puede dejar el disponible en negativo (INV-04), salvo la excepción explícita de un administrador (INV-05). |
 | AJU-04 | Cada ajuste tiene número (AJ-000001), queda en el kardex con su motivo y en la auditoría, y no se puede modificar ni borrar. |
 
+## 5.2 Importación de materias primas (IMP)
+
+| ID | Regla |
+|----|-------|
+| IMP-01 | La carga inicial del catálogo se hace desde un archivo CSV (Excel → "Guardar como → CSV UTF-8"). Requiere `materials.manage`. Hay una plantilla descargable. |
+| IMP-02 | Columnas: `codigo` (opcional; vacío = automático), `nombre`, `categoria`, `unidad` (código o símbolo de una unidad existente), `minimo`, `maximo`, `ubicacion`, `proveedor` (código o nombre de uno existente), `existencia_inicial`, `costo_unitario`, `descripcion`. Se aceptan separador coma o punto y coma; con punto y coma, la coma es decimal. |
+| IMP-03 | **Todo o nada:** si una sola fila tiene error, no se importa ninguna. Antes de importar se muestra una vista previa con el error de cada fila. La base de datos vuelve a validar todo (no se confía solo en la vista previa). |
+| IMP-04 | Cada material con existencia inicial genera su ajuste "Inventario inicial" (igual que INV-10), con su movimiento en el kardex y su costo. |
+| IMP-05 | Códigos repetidos dentro del archivo o ya existentes en el sistema son error. Unidades y proveedores deben existir. Categorías y ubicaciones que no existan se crean solo si el usuario lo marca y tiene `catalog.manage`. |
+| IMP-06 | Máximo 2,000 filas por archivo. La importación queda en la auditoría como un evento con la cantidad de materiales creados. |
+
 ## 6. Órdenes de trabajo (OT)
 
 | ID | Regla |
