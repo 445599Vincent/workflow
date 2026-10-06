@@ -106,7 +106,8 @@ COMPRA / ENTRADA → EXISTENCIA → RESERVA → ORDEN DE TRABAJO → CONSUMO REA
 | CON-02 | Puede registrarse consumo o merma de un material no planificado: se agrega a la OT como línea "no planificada" (estimado 0), para que su costo cuente en el real y la diferencia sea visible. |
 | CON-03 | Variación = (consumo + merma) − estimado. Variación % = variación / estimado × 100. |
 | CON-04 | Si la variación % supera `consumption_variance_alert_pct` (10 % por defecto) se resalta en rojo y genera alerta. Si es menor que el estimado se resalta como ahorro. |
-| CON-05 | Un consumo se anula con motivo; la anulación genera una devolución (`return`) al stock al mismo costo. *(Pendiente: Fase 3b.)* |
+| CON-05 | Un consumo no se borra ni se edita: se **anula** con motivo (permiso `inventory.void`, Administrador y Supervisor). La anulación genera una devolución (`return`) al stock al mismo costo unitario del consumo, resta la cantidad y el costo de la línea y del costo real de la OT, y queda en el historial. |
+| CON-06 | Solo se anulan consumos o mermas de una OT En producción o En instalación. Para corregir una OT cerrada, un administrador la reabre primero. Lo anulado no vuelve a quedar reservado. |
 
 ### 6.4 Mermas (MER)
 
@@ -116,7 +117,8 @@ COMPRA / ENTRADA → EXISTENCIA → RESERVA → ORDEN DE TRABAJO → CONSUMO REA
 | MER-02 | La merma descuenta stock físico (movimiento `waste`) y suma al costo real de la OT. |
 | MER-03 | Ejemplo: se usaron 11.3 m² en total → consumo útil 10.5 m² + merma 0.8 m². Total = 11.3 m², comparado contra el estimado de 10 m² → +13 %. |
 | MER-04 | Motivos: Error de impresión, Corte, Daño, Prueba, Instalación, Defecto, Otro (Otro exige observación). |
-| MER-05 | Merma de almacén (sin OT) es válida (p. ej. material dañado por humedad). *(Pendiente: Fase 3b; mientras tanto se registra como ajuste negativo.)* |
+| MER-05 | Merma de almacén (sin OT) es válida (p. ej. material dañado por humedad). Requiere `inventory.adjust`, motivo, y solo descuenta del **disponible** (no de lo reservado por órdenes); nunca deja stock negativo. |
+| MER-07 | Una merma se anula igual que un consumo (CON-05): devolución al mismo costo, con motivo; si era de una OT, aplica CON-06. |
 | MER-06 | Alerta de merma considerable: merma de una OT > `waste_alert_pct` (5 % por defecto) del consumo total de ese material. |
 
 ### 6.5 Cierre (CIE)
