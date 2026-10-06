@@ -161,7 +161,8 @@ alertas.
 | REP-04 | Costo por orden (estimado vs real): órdenes **terminadas** en el período, con costo estimado, real, merma, variación RD$ y %. |
 | REP-05 | Consumo por cliente: costo de consumo y merma del período agrupado por el cliente de la OT; las OT sin cliente aparecen como "Sin cliente". |
 | REP-06 | Inventario actual: existencia física, reservada, disponible, costo promedio y valor (físico × promedio) por material, con totales por categoría. No depende del período. |
-| REP-07 | Todo reporte se puede exportar a CSV (D-031) con los mismos filtros que se ven en pantalla. |
+| REP-07 | Todo reporte se puede exportar a CSV (D-031) con los mismos filtros que se ven en pantalla. Lo mismo aplica a los listados de Movimientos y Mermas. |
+| REP-08 | Tendencia mensual (dashboard): costo de consumo y de merma de los últimos 6 meses, incluido el mes en curso, y costo estimado vs real de las órdenes terminadas en cada mes. Sin registros anulados (REP-01). |
 
 ## 9. Permisos
 
