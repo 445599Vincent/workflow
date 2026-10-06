@@ -12,14 +12,19 @@ import {
 /** Dominican Republic is UTC-4 all year (no daylight saving time). */
 const DR_OFFSET = "-04:00";
 
-export async function listMovements(params: MovementListParams) {
+/** CSV exports return every matching row up to this cap (REP-07). */
+export const EXPORT_LIMIT = 20000;
+type ListOptions = { all?: boolean };
+
+export async function listMovements(params: MovementListParams, options: ListOptions = {}) {
   const supabase = await createClient();
-  const from = (params.page - 1) * MOVEMENTS_PAGE_SIZE;
+  const from = options.all ? 0 : (params.page - 1) * MOVEMENTS_PAGE_SIZE;
+  const size = options.all ? EXPORT_LIMIT : MOVEMENTS_PAGE_SIZE;
 
   let query = supabase
     .from("material_kardex")
     .select(
-      "id, seq, material_id, material_sku, material_name, unit_symbol, unit_decimals, movement_type, quantity, on_hand_delta, reserved_delta, on_hand_after, total_cost, work_order_number, reference, notes, negative_override, occurred_at, created_by_name",
+      "id, seq, material_id, material_sku, material_name, unit_symbol, unit_decimals, movement_type, quantity, on_hand_delta, reserved_delta, on_hand_after, unit_cost, total_cost, work_order_number, reference, notes, negative_override, occurred_at, created_by_name",
       { count: "exact" },
     );
 
@@ -35,7 +40,7 @@ export async function listMovements(params: MovementListParams) {
 
   const { data, error, count } = await query
     .order("seq", { ascending: false })
-    .range(from, from + MOVEMENTS_PAGE_SIZE - 1);
+    .range(from, from + size - 1);
   if (error) throw new Error(`No se pudieron cargar los movimientos: ${error.message}`);
 
   return {
@@ -49,9 +54,10 @@ export async function listMovements(params: MovementListParams) {
 export type MovementRow = Awaited<ReturnType<typeof listMovements>>["rows"][number];
 
 /** Waste records (orders and warehouse), newest first, plus the active total. */
-export async function listWaste(params: WasteListParams) {
+export async function listWaste(params: WasteListParams, options: ListOptions = {}) {
   const supabase = await createClient();
-  const from = (params.page - 1) * WASTE_PAGE_SIZE;
+  const from = options.all ? 0 : (params.page - 1) * WASTE_PAGE_SIZE;
+  const size = options.all ? EXPORT_LIMIT : WASTE_PAGE_SIZE;
 
   let query = supabase.from("waste_records").select(
     `id, quantity, total_cost, reason, notes, occurred_at, voided_at, void_reason, work_order_id,
@@ -81,7 +87,7 @@ export async function listWaste(params: WasteListParams) {
   }
 
   const [list, sum] = await Promise.all([
-    query.order("occurred_at", { ascending: false }).range(from, from + WASTE_PAGE_SIZE - 1),
+    query.order("occurred_at", { ascending: false }).range(from, from + size - 1),
     totals,
   ]);
   if (list.error) throw new Error(`No se pudieron cargar las mermas: ${list.error.message}`);

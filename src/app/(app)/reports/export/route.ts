@@ -4,6 +4,7 @@ import { buildReportTable, reportFileName, reportToCsv } from "@/features/report
 import { getReport } from "@/features/reports/queries";
 import { parseReportParams } from "@/features/reports/schemas";
 import { getCurrentUser } from "@/lib/auth/session";
+import { csvResponse } from "@/lib/csv";
 
 /** CSV download of the report on screen, same filters (REP-07, D-031). */
 export async function GET(request: NextRequest) {
@@ -14,11 +15,5 @@ export async function GET(request: NextRequest) {
   const table = buildReportTable(await getReport(params));
   const fileName = reportFileName(params.view, params.from, params.to);
 
-  return new Response(reportToCsv(table), {
-    headers: {
-      "Content-Type": "text/csv; charset=utf-8",
-      "Content-Disposition": `attachment; filename="${fileName}"`,
-      "Cache-Control": "no-store",
-    },
-  });
+  return csvResponse(reportToCsv(table), fileName);
 }

@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import {
   ArrowLeftRightIcon,
+  DownloadIcon,
   PackagePlusIcon,
   ScaleIcon,
   ScissorsIcon,
@@ -18,6 +19,7 @@ import { MovementsTable } from "@/features/inventory/components/movements-table"
 import { listMovements } from "@/features/inventory/queries";
 import { MOVEMENTS_PAGE_SIZE, parseMovementListParams } from "@/features/inventory/schemas";
 import { can, requireUser } from "@/lib/auth/session";
+import { buildHref } from "@/lib/url";
 
 export const metadata: Metadata = { title: "Movimientos" };
 
@@ -34,6 +36,12 @@ export default async function MovementsPage({ searchParams }: PageProps<"/moveme
         description="Todos los cambios de inventario, del más reciente al más antiguo. Ningún movimiento se borra."
         actions={
           <>
+            <Button variant="outline" asChild>
+              <a href={buildHref("/movements/export", { ...params }, { page: null })} download>
+                <DownloadIcon />
+                Exportar CSV
+              </a>
+            </Button>
             <Button variant="outline" asChild>
               <Link href="/movements/waste">
                 <ScissorsIcon />
