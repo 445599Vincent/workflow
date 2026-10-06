@@ -144,3 +144,34 @@
     font-feature-settings: "cv11", "ss01";
   }
 }
+
+/* Slim scrollbar for the dark sidebar: thin, translucent, teal on hover. */
+@layer utilities {
+  .scrollbar-sidebar {
+    scrollbar-width: thin;
+    scrollbar-color: rgb(195 209 230 / 0.22) transparent;
+  }
+  .scrollbar-sidebar:hover {
+    scrollbar-color: rgb(45 212 191 / 0.5) transparent;
+  }
+  .scrollbar-sidebar::-webkit-scrollbar {
+    width: 8px;
+  }
+  .scrollbar-sidebar::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  .scrollbar-sidebar::-webkit-scrollbar-thumb {
+    background: rgb(195 209 230 / 0.2);
+    border-radius: 9999px;
+    border: 2px solid transparent;
+    background-clip: content-box;
+  }
+  .scrollbar-sidebar:hover::-webkit-scrollbar-thumb {
+    background: rgb(45 212 191 / 0.5);
+    background-clip: content-box;
+  }
+  .scrollbar-sidebar::-webkit-scrollbar-thumb:hover {
+    background: rgb(45 212 191 / 0.8);
+    background-clip: content-box;
+  }
+}

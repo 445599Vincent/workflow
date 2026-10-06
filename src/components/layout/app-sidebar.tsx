@@ -16,7 +16,7 @@ export function AppSidebar({ permissions }: { permissions: readonly Permission[]
           <Logo inverted />
         </Link>
       </div>
-      <div className="flex-1 overflow-y-auto px-3 py-4">
+      <div className="scrollbar-sidebar flex-1 overflow-y-auto px-3 py-4">
         <SidebarNav permissions={permissions} />
       </div>
       <div className="border-t border-sidebar-border px-5 py-4 text-xs text-sidebar-foreground/50">

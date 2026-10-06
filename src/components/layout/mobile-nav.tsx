@@ -34,7 +34,7 @@ export function MobileNav({ permissions }: { permissions: readonly Permission[] 
         <div className="flex h-16 items-center px-5">
           <Logo inverted />
         </div>
-        <div className="overflow-y-auto px-3 py-4">
+        <div className="scrollbar-sidebar overflow-y-auto px-3 py-4">
           <SidebarNav permissions={permissions} onNavigate={() => setOpen(false)} />
         </div>
       </SheetContent>
