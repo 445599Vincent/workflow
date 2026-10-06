@@ -67,7 +67,8 @@ select pg_temp.expect(
 update public.profiles set role_code = 'admin'      where id = '00000000-0000-0000-0000-00000000000a';
 update public.profiles set role_code = 'warehouse'  where id = '00000000-0000-0000-0000-00000000000b';
 update public.profiles set role_code = 'production' where id = '00000000-0000-0000-0000-00000000000c';
-update public.profiles set is_active = false        where id = '00000000-0000-0000-0000-00000000000e';
+update public.profiles set role_code = 'admin', is_active = false
+ where id = '00000000-0000-0000-0000-00000000000e';
 
 create temp table t_ids (key text primary key, id uuid);
 grant all on t_ids to authenticated;
@@ -244,6 +245,13 @@ select pg_temp.expect(
   (select count(*) = 0 from public.audit_logs), 'viewer cannot read the audit log');
 
 select pg_temp.expect_error(
+  $$select public.apply_stock_movement(
+      p_material_id => (select id from t_ids where key = 'vinil'),
+      p_movement_type => 'adjustment_out',
+      p_quantity => 1)$$,
+  '%permission denied%');
+
+select pg_temp.expect_error(
   $$update public.profiles set role_code = 'admin' where id = '00000000-0000-0000-0000-00000000000d'$$,
   '%Solo un administrador%');
 
@@ -255,6 +263,18 @@ select pg_temp.expect(
 select pg_temp.act_as('00000000-0000-0000-0000-00000000000e'); -- inactive
 
 select pg_temp.expect((select count(*) = 0 from public.materials), 'inactive users read nothing');
+select pg_temp.expect(
+  (select count(*) = 0 from public.materials_overview),
+  'inactive users cannot bypass RLS through the materials view');
+select pg_temp.expect(
+  (select count(*) = 0 from public.material_kardex),
+  'inactive users cannot bypass RLS through the kardex view');
+select pg_temp.expect(
+  (select count(*) = 0 from public.current_user_permissions()),
+  'inactive users have no effective permissions');
+select pg_temp.expect(
+  not public.has_permission('users.manage'),
+  'inactive users fail direct permission checks');
 
 select pg_temp.act_as('00000000-0000-0000-0000-00000000000a'); -- admin
 
@@ -304,10 +324,22 @@ select pg_temp.expect(
      from public.get_dashboard_summary() s),
   'dashboard summary computes KPIs');
 
+select pg_temp.act_as('00000000-0000-0000-0000-00000000000e'); -- inactive admin
+select pg_temp.expect(
+  (select (s ->> 'active_materials')::int = 0
+          and (s ->> 'inventory_value')::numeric = 0
+          and (s ->> 'active_work_orders')::int = 0
+          and (s ->> 'overdue_work_orders')::int = 0
+     from public.get_dashboard_summary() s),
+  'inactive users receive no inventory or work-order dashboard data');
+
 -- 7. Anonymous access -------------------------------------------------------------
 select pg_temp.act_as_system();
 set local role anon;
 select pg_temp.expect_error($$select count(*) from public.materials$$, '%permission denied%');
+select pg_temp.expect_error(
+  $$select * from public.current_user_permissions()$$,
+  '%permission denied%');
 reset role;
 
 rollback;
