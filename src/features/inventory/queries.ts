@@ -97,3 +97,44 @@ export async function listWaste(params: WasteListParams) {
   };
 }
 export type WasteRow = Awaited<ReturnType<typeof listWaste>>["rows"][number];
+
+/** REP-06: inventory value by category (active materials) and stock health. */
+export async function getInventoryValuation() {
+  const supabase = await createClient();
+  const { data, error } = await supabase
+    .from("materials_overview")
+    .select("category_id, category_name, inventory_value, stock_status")
+    .eq("is_active", true);
+  if (error) throw new Error(`No se pudo calcular el inventario: ${error.message}`);
+
+  const byCategory = new Map<
+    string,
+    { id: string | null; name: string; materials: number; value: number }
+  >();
+  let total = 0;
+  let low = 0;
+  let out = 0;
+  for (const row of data) {
+    const key = row.category_id ?? "none";
+    const entry = byCategory.get(key) ?? {
+      id: row.category_id,
+      name: row.category_name ?? "Sin categoría",
+      materials: 0,
+      value: 0,
+    };
+    entry.materials += 1;
+    entry.value += row.inventory_value ?? 0;
+    byCategory.set(key, entry);
+    total += row.inventory_value ?? 0;
+    if (row.stock_status === "low") low += 1;
+    if (row.stock_status === "out") out += 1;
+  }
+
+  return {
+    total,
+    materials: data.length,
+    low,
+    out,
+    categories: [...byCategory.values()].sort((a, b) => b.value - a.value),
+  };
+}
