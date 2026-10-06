@@ -1,0 +1,146 @@
+@import "tailwindcss";
+@import "tw-animate-css";
+
+@custom-variant dark (&:is(.dark *));
+
+/*
+ * Workflow design tokens.
+ * Palette: deep blue (brand / sidebar), bright blue (primary actions),
+ * teal (accent / positive), white and neutral greys.
+ */
+:root {
+  --radius: 0.625rem;
+
+  --background: #f6f8fb;
+  --foreground: #0f1e33;
+  --card: #ffffff;
+  --card-foreground: #0f1e33;
+  --popover: #ffffff;
+  --popover-foreground: #0f1e33;
+
+  --primary: #1d5fd8;
+  --primary-foreground: #ffffff;
+  --secondary: #eef2f8;
+  --secondary-foreground: #13294b;
+  --muted: #f1f4f9;
+  --muted-foreground: #5b6b82;
+  --accent: #e8f1fd;
+  --accent-foreground: #13294b;
+  --destructive: #d92d20;
+  --destructive-foreground: #ffffff;
+
+  --success: #0f9f8f;
+  --success-foreground: #ffffff;
+  --warning: #c77700;
+  --warning-foreground: #ffffff;
+  --teal: #14b8a6;
+
+  --border: #e3e8f0;
+  --input: #d6dee9;
+  --ring: #1d5fd8;
+
+  --sidebar: #0b2545;
+  --sidebar-foreground: #c3d1e6;
+  --sidebar-primary: #2dd4bf;
+  --sidebar-primary-foreground: #06243f;
+  --sidebar-accent: #13345c;
+  --sidebar-accent-foreground: #ffffff;
+  --sidebar-border: #173c68;
+  --sidebar-ring: #2dd4bf;
+}
+
+.dark {
+  --background: #08111f;
+  --foreground: #e6edf7;
+  --card: #0e1a2d;
+  --card-foreground: #e6edf7;
+  --popover: #0e1a2d;
+  --popover-foreground: #e6edf7;
+
+  --primary: #4b8cf5;
+  --primary-foreground: #04122a;
+  --secondary: #16253c;
+  --secondary-foreground: #e6edf7;
+  --muted: #142238;
+  --muted-foreground: #92a3bb;
+  --accent: #172b48;
+  --accent-foreground: #e6edf7;
+  --destructive: #f2564b;
+  --destructive-foreground: #ffffff;
+
+  --success: #2dd4bf;
+  --success-foreground: #04122a;
+  --warning: #f2a93b;
+  --warning-foreground: #04122a;
+  --teal: #2dd4bf;
+
+  --border: #1d2e47;
+  --input: #253a58;
+  --ring: #4b8cf5;
+
+  --sidebar: #060e1a;
+  --sidebar-foreground: #a9b9d0;
+  --sidebar-primary: #2dd4bf;
+  --sidebar-primary-foreground: #04122a;
+  --sidebar-accent: #12233b;
+  --sidebar-accent-foreground: #ffffff;
+  --sidebar-border: #14243b;
+  --sidebar-ring: #2dd4bf;
+}
+
+@theme inline {
+  --font-sans: var(--font-geist-sans);
+  --font-mono: var(--font-geist-mono);
+
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-destructive-foreground: var(--destructive-foreground);
+  --color-success: var(--success);
+  --color-success-foreground: var(--success-foreground);
+  --color-warning: var(--warning);
+  --color-warning-foreground: var(--warning-foreground);
+  --color-teal: var(--teal);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+
+  --color-sidebar: var(--sidebar);
+  --color-sidebar-foreground: var(--sidebar-foreground);
+  --color-sidebar-primary: var(--sidebar-primary);
+  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
+  --color-sidebar-accent: var(--sidebar-accent);
+  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+  --color-sidebar-border: var(--sidebar-border);
+  --color-sidebar-ring: var(--sidebar-ring);
+
+  --radius-sm: calc(var(--radius) - 4px);
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) + 4px);
+}
+
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+  }
+  html {
+    -webkit-text-size-adjust: 100%;
+  }
+  body {
+    @apply bg-background font-sans text-foreground antialiased;
+    font-feature-settings: "cv11", "ss01";
+  }
+}
