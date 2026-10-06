@@ -2159,6 +2159,31 @@ export type Database = {
         };
       };
       require_permission: { Args: { p_permission: string }; Returns: undefined };
+      void_inventory_receipt: {
+        Args: { p_reason: string; p_receipt_id: string };
+        Returns: {
+          created_at: string;
+          created_by: string | null;
+          id: string;
+          invoice_number: string | null;
+          notes: string | null;
+          number: string;
+          receipt_date: string;
+          supplier_id: string | null;
+          total_cost: number;
+          updated_at: string;
+          updated_by: string | null;
+          void_reason: string | null;
+          voided_at: string | null;
+          voided_by: string | null;
+        };
+        SetofOptions: {
+          from: "*";
+          to: "inventory_receipts";
+          isOneToOne: true;
+          isSetofReturn: false;
+        };
+      };
     };
     Enums: {
       movement_type:
