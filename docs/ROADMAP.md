@@ -22,19 +22,17 @@ antes de continuar. Leyenda: ✅ hecho · 🟡 parcial · ⬜ pendiente.
 - ⬜ Pantalla de Usuarios (invitar, asignar rol, desactivar) — por ahora vía panel de Supabase + SQL (ver README)
 - ✅ CI en GitHub Actions (formato, lint, typecheck, build, migraciones y pruebas de BD)
 
-## Fase 2 — Inventario 🟡
+## Fase 2 — Inventario ✅
 
 - ✅ Materias primas v1: listar, buscar, filtrar, ordenar, paginar, crear (con existencia inicial), editar, consultar
 - ✅ Kardex (consulta en el detalle del material)
-- ⬜ Categorías (CRUD)
-- ⬜ Unidades (CRUD)
-- ⬜ Ubicaciones (CRUD)
+- ✅ Categorías, unidades y ubicaciones (Configuración: crear, editar, desactivar)
 - ✅ Proveedores: listar, buscar, crear, editar, desactivar, detalle con materiales y entradas
 - ✅ Entradas de inventario: formulario multi-línea con buscador de materiales, listado con filtros, detalle
-- ⬜ Ajustes de inventario (→ `create_inventory_adjustment`)
-- ⬜ Movimientos (listado global con filtros)
+- ✅ Ajustes de inventario con motivo, vista previa y excepción de stock negativo solo para administrador
+- ✅ Movimientos: libro mayor global con búsqueda y filtros por tipo y fecha
 - ✅ Anulación de entradas (`void_inventory_receipt`, con motivo y reverso del costo promedio)
-- ✅ Pruebas automáticas de reglas de base de datos (`supabase/tests/inventory_rules_test.sql`, 52 aserciones, en CI)
+- ✅ Pruebas automáticas de reglas de base de datos (`supabase/tests/inventory_rules_test.sql`, 59 aserciones, en CI)
 
 ## Fase 3 — Órdenes de trabajo ⬜
 
@@ -66,8 +64,8 @@ antes de continuar. Leyenda: ✅ hecho · 🟡 parcial · ⬜ pendiente.
 ## Siguiente paso recomendado
 
 1. Crear el proyecto Supabase de producción, aplicar migraciones y crear el primer administrador (README).
-2. Conectar Vercel y validar con el equipo de almacén materias primas, proveedores y entradas con datos reales.
-3. Completar Fase 2: ajustes de inventario (la RPC ya existe), listado global de movimientos y catálogos.
+2. Conectar Vercel y validar con el equipo de almacén el flujo completo de inventario con datos reales.
+3. Pantalla de Usuarios (cierra la Fase 1) y comenzar la Fase 3: órdenes de trabajo.
 
 ## Pendientes de decisión con el negocio
 

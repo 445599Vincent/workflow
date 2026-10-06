@@ -226,10 +226,10 @@ La matriz completa de permisos está en [BUSINESS_RULES.md](./BUSINESS_RULES.md#
 
 | Nivel | Qué | Dónde |
 |-------|-----|-------|
-| Base de datos | 52 aserciones: permisos, RLS, stock negativo, costo promedio, anulación de entradas, inmutabilidad, ciclo de vida de OT | `supabase/tests/inventory_rules_test.sql` (CI) |
+| Base de datos | 59 aserciones: permisos, RLS, stock negativo, costo promedio, anulación de entradas, catálogos, inmutabilidad, ciclo de vida de OT | `supabase/tests/inventory_rules_test.sql` (CI) |
 | Concurrencia | Dos sesiones retirando el mismo material: la segunda espera el bloqueo y es rechazada con el saldo actualizado | Verificado manualmente; ver §6 |
 | Aplicación | Formato, lint, typecheck y build | CI |
-| Extremo a extremo | Login, dashboard, materias primas, proveedores, entradas (crear, anular), permisos de Almacén y Consulta, móvil | Verificado con Playwright contra GoTrue + PostgREST locales; automatizar en Fase 2 |
+| Extremo a extremo | Login, dashboard, materias primas, proveedores, entradas (crear, anular), ajustes, movimientos, catálogos, permisos de Almacén y Consulta, móvil | Verificado con Playwright contra GoTrue + PostgREST locales; automatizar en Fase 2 |
 
 ## 8. Integración futura con ADM Cloud
 

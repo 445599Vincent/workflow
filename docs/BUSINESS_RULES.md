@@ -58,6 +58,15 @@ COMPRA / ENTRADA → EXISTENCIA → RESERVA → ORDEN DE TRABAJO → CONSUMO REA
 | ENT-05 | Una entrada no se borra; se anula con motivo (permiso `inventory.void`). La anulación genera una salida inversa por línea al costo original (revierte el costo promedio) y solo es posible si hay stock disponible suficiente de **todos** los materiales; si no, no se anula nada. |
 | ENT-06 | La fecha de una entrada no puede ser futura. Cada línea debe respetar la precisión de la unidad del material (se valida en el formulario y en la BD). |
 
+## 5.1 Ajustes (AJU)
+
+| ID | Regla |
+|----|-------|
+| AJU-01 | Un ajuste corrige diferencias de inventario (conteo físico, corrección de un registro, material encontrado u otro motivo descrito). No sustituye a las entradas (compras) ni a los consumos de órdenes. Requiere `inventory.adjust`. |
+| AJU-02 | Ajuste positivo: se valora al costo indicado (por defecto, el promedio actual) y recalcula el promedio. Ajuste negativo: se valora al promedio vigente y no lo cambia. |
+| AJU-03 | Un ajuste negativo no puede dejar el disponible en negativo (INV-04), salvo la excepción explícita de un administrador (INV-05). |
+| AJU-04 | Cada ajuste tiene número (AJ-000001), queda en el kardex con su motivo y en la auditoría, y no se puede modificar ni borrar. |
+
 ## 6. Órdenes de trabajo (OT)
 
 | ID | Regla |

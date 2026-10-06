@@ -267,7 +267,7 @@ Todas con `security_invoker = true` (respetan RLS del usuario).
 - `materials_overview` — materiales + categoría, unidad, ubicación, proveedor,
   `stock_available`, `inventory_value` (= físico × costo promedio) y
   `stock_status` (`out`, `low`, `ok`, `inactive`). Base de la tabla de inventario.
-- `material_kardex` — movimientos + número de OT + nombre del usuario.
+- `material_kardex` — movimientos + número de OT + nombre del usuario + código, nombre y unidad del material (009). Base del kardex por material y del listado global de movimientos.
 
 ## 7. Políticas RLS (resumen)
 
@@ -299,6 +299,7 @@ Todas con `security_invoker = true` (respetan RLS del usuario).
 | `…_006_views_dashboard.sql` | Vistas, `get_dashboard_summary` y `get_top_consumed_materials`. |
 | `…_007_rls_grants.sql` | Activación de RLS, grants por columna y políticas. |
 | `…_008_receipt_voiding.sql` | `void_inventory_receipt` (anulación de entradas). |
+| `…_009_kardex_material_columns.sql` | Columnas del material en `material_kardex`. |
 
 **Regla para nuevas migraciones:** nunca editar una migración ya aplicada en un
 entorno; crear una nueva. Toda tabla nueva debe activar RLS y otorgar permisos
