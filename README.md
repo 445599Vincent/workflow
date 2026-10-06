@@ -82,7 +82,7 @@ automáticamente). Nunca volver a ejecutar una migración ya aplicada.
 
 > **Desde la versión con Fase 2/Usuarios (migraciones hasta 010):** aplicar
 > `…_011_work_order_execution.sql`, `…_012_usage_voiding_warehouse_waste.sql`,
-> `…_013_reports_alerts.sql` y `…_014_monthly_trend.sql`, en ese orden.
+> `…_013_reports_alerts.sql`, `…_014_monthly_trend.sql` y `…_015_material_import.sql`, en ese orden.
 > Desde la 011 el estado de una orden solo se modifica con la función
 > `change_work_order_status` (la app ya la usa).
 
@@ -180,7 +180,8 @@ primas** (con kardex), **Proveedores**, **Compras / Entradas** (con anulación),
 **Configuración**, **Clientes**, **Órdenes de trabajo** (materiales planificados,
 reservas, consumo, merma, anulaciones, costo real en vivo, cierre, cancelación y
 reapertura), **Inventario** (valor por categoría), **Alertas**, **Reportes** con
-exportación a Excel (CSV), gráficos de tendencia en el dashboard y **Auditoría**. Ver [docs/ROADMAP.md](docs/ROADMAP.md).
+exportación a Excel (CSV), gráficos de tendencia en el dashboard y **Auditoría**.
+Fase 5 en curso: **importación del catálogo de materiales desde Excel**. Ver [docs/ROADMAP.md](docs/ROADMAP.md).
 
 ## Convenciones de commits
 
