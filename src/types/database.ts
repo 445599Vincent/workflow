@@ -2233,6 +2233,10 @@ export type Database = {
         }[];
       };
       has_permission: { Args: { p_permission: string }; Returns: boolean };
+      import_materials: {
+        Args: { p_create_catalogs?: boolean; p_rows: Json };
+        Returns: number;
+      };
       is_active_user: { Args: Record<PropertyKey, never>; Returns: boolean };
       lock_work_order: {
         Args: {

@@ -693,6 +693,55 @@ select pg_temp.expect(
                 from public.work_order_materials group by material_id) w on w.material_id = m.id),
   'reserved stock equals what open orders hold');
 
+-- 6f. Material import (IMP-01..06) ------------------------------------------------
+select pg_temp.act_as('00000000-0000-0000-0000-00000000000c'); -- production
+select pg_temp.expect_error(
+  $$select public.import_materials('[{"name":"X","category":"Viniles","unit":"und"}]')$$,
+  '%No tiene permiso%');
+
+select pg_temp.act_as('00000000-0000-0000-0000-00000000000b'); -- warehouse: materials.manage, not catalog.manage
+select pg_temp.expect_error(
+  $$select public.import_materials('[{"name":"X","category":"Nueva","unit":"und"}]', true)$$,
+  '%No tiene permiso%');
+
+select pg_temp.act_as('00000000-0000-0000-0000-00000000000a'); -- admin
+create temp table t_count as select count(*) as n from public.materials;
+grant all on t_count to authenticated;
+
+select pg_temp.expect_error(
+  $$select public.import_materials('[
+      {"sku":"IMP-1","name":"Bueno","category":"Viniles","unit":"m2","opening_quantity":5,"opening_unit_cost":100},
+      {"sku":"imp-1","name":"Repetido","category":"Viniles","unit":"m2"},
+      {"sku":"TOR-14","name":"Existente","category":"Viniles","unit":"und"},
+      {"name":"","category":"Viniles","unit":"und"},
+      {"name":"Sin unidad","category":"Viniles","unit":"barril"},
+      {"name":"Sin costo","category":"Viniles","unit":"und","opening_quantity":3},
+      {"name":"Decimales","category":"Viniles","unit":"und","opening_quantity":1.5,"opening_unit_cost":1},
+      {"name":"Categoría nueva","category":"Rotulación vehicular","unit":"und"}
+    ]')$$,
+  '%No se importó ningún material%Fila 3: el código IMP-1 está repetido%Fila 4: ya existe un material con el código TOR-14%Fila 5: falta el nombre%Fila 6: la unidad "barril" no existe%Fila 7: indique el costo unitario%Fila 8: la existencia admite como máximo 0 decimales%Fila 9: la categoría "Rotulación vehicular" no existe%');
+
+select pg_temp.expect(
+  (select count(*) from public.materials) = (select n from t_count),
+  'an import with errors creates nothing (all or nothing)');
+
+select public.import_materials('[
+  {"sku":"IMP-1","name":"Vinil importado","category":"Viniles","unit":"m²","min_stock":2,"max_stock":50,
+   "opening_quantity":12.5,"opening_unit_cost":80,"description":"Desde CSV"},
+  {"name":"Letras corpóreas","category":"Rotulación vehicular","unit":"und","location":"Bodega Norte"}
+]', true);
+
+select pg_temp.expect(
+  (select stock_on_hand = 12.5 and avg_cost = 80 and min_stock = 2 and max_stock = 50
+     from public.materials where sku = 'IMP-1')
+  and exists (select 1 from public.inventory_adjustments a join public.materials m on m.id = a.material_id
+              where m.sku = 'IMP-1' and a.is_opening_balance and a.quantity = 12.5)
+  and exists (select 1 from public.materials m join public.categories c on c.id = m.category_id
+                join public.locations l on l.id = m.location_id
+              where m.name = 'Letras corpóreas' and c.name = 'Rotulación vehicular' and l.name = 'Bodega Norte')
+  and exists (select 1 from public.audit_logs where action = 'materials.imported'),
+  'import creates materials with opening stock, new catalogs on request, and an audit event');
+
 -- 7. Anonymous access -------------------------------------------------------------
 select pg_temp.act_as_system();
 set local role anon;
