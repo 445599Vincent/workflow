@@ -1859,6 +1859,8 @@ export type Database = {
           created_by_name: string | null;
           id: string | null;
           material_id: string | null;
+          material_name: string | null;
+          material_sku: string | null;
           movement_type: Database["public"]["Enums"]["movement_type"] | null;
           negative_override: boolean | null;
           notes: string | null;
@@ -1876,6 +1878,8 @@ export type Database = {
           source_table: string | null;
           total_cost: number | null;
           unit_cost: number | null;
+          unit_decimals: number | null;
+          unit_symbol: string | null;
           work_order_id: string | null;
           work_order_number: string | null;
         };

@@ -208,6 +208,11 @@ select pg_temp.expect(
   (select count(*) = 3 from public.material_kardex where material_id = (select id from t_ids where key = 'vinil')),
   'kardex view lists the material movements');
 
+select pg_temp.expect(
+  (select bool_and(material_sku = 'MAT-0001' and unit_symbol = 'm²' and unit_decimals = 2)
+     from public.material_kardex where material_id = (select id from t_ids where key = 'vinil')),
+  'kardex view carries material code, name and unit');
+
 select pg_temp.act_as_system();
 
 select pg_temp.expect_error(
@@ -328,6 +333,41 @@ select pg_temp.expect_error(
 select pg_temp.expect_error(
   $$update public.inventory_receipts set voided_at = now(), void_reason = 'directo'$$,
   '%permission denied%');
+
+select pg_temp.act_as('00000000-0000-0000-0000-00000000000a'); -- back to admin
+
+-- 5c. Catalogs ------------------------------------------------------------------
+-- Admin (catalog.manage) maintains categories, units and locations.
+insert into public.categories (name, sort_order) values ('Señalética', 20);
+insert into public.locations (code, name) values ('EST-C', 'Estante C');
+update public.units set decimals = 1 where code = 'g';
+
+select pg_temp.expect(
+  (select created_by = '00000000-0000-0000-0000-00000000000a' from public.categories where name = 'Señalética'),
+  'catalog managers create categories (audit fields filled)');
+
+select pg_temp.expect_error(
+  $$insert into public.categories (name) values ('señalética')$$,
+  '%duplicate key%');
+
+select pg_temp.expect_error(
+  $$update public.units set code = 'gr' where code = 'g'$$,
+  '%permission denied%');
+
+select pg_temp.expect_error(
+  $$delete from public.categories where name = 'Señalética'$$,
+  '%permission denied%');
+
+select pg_temp.act_as('00000000-0000-0000-0000-00000000000b'); -- warehouse
+
+select pg_temp.expect_error(
+  $$insert into public.categories (name) values ('No autorizada')$$,
+  '%row-level security%');
+
+update public.locations set name = 'Intento' where code = 'EST-C';
+select pg_temp.expect(
+  (select name = 'Estante C' from public.locations where code = 'EST-C'),
+  'users without catalog.manage cannot change catalogs');
 
 select pg_temp.act_as('00000000-0000-0000-0000-00000000000a'); -- back to admin
 
