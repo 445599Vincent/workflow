@@ -91,7 +91,7 @@ select 'vinil', (public.create_material(
 )).id;
 
 select pg_temp.expect(
-  (select sku = 'MAT-0001' and stock_on_hand = 100 and avg_cost = 300 and created_by = '00000000-0000-0000-0000-00000000000b'
+  (select sku = 'MAT-0001' and stock_on_hand = 100 and avg_cost = 300 and last_cost = 300 and created_by = '00000000-0000-0000-0000-00000000000b'
      from public.materials where id = (select id from t_ids where key = 'vinil')),
   'create_material assigns SKU, opening stock and average cost');
 

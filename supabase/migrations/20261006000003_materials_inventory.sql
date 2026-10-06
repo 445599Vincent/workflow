@@ -360,7 +360,9 @@ begin
       v_new_avg := (v_mat.stock_on_hand * v_mat.avg_cost + p_quantity * v_unit_cost)
                    / (v_mat.stock_on_hand + p_quantity);
     end if;
-    if p_movement_type = 'entry' then
+    -- Last known purchase cost: every entry, or an opening/positive adjustment
+    -- while no purchase cost is known yet (BR CST-02).
+    if p_movement_type = 'entry' or (p_movement_type = 'adjustment_in' and v_mat.last_cost = 0) then
       v_new_last := v_unit_cost;
     end if;
   elsif p_movement_type = 'exit' and p_unit_cost is not null then

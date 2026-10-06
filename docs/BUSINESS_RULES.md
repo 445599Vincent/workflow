@@ -40,7 +40,7 @@ COMPRA / ENTRADA → EXISTENCIA → RESERVA → ORDEN DE TRABAJO → CONSUMO REA
 | ID | Regla |
 |----|-------|
 | CST-01 | Costeo por **promedio ponderado móvil**: en cada entrada `nuevo_promedio = (físico × promedio + cantidad × costo) / (físico + cantidad)`. Si el físico previo es ≤ 0, el promedio pasa a ser el costo de la entrada. |
-| CST-02 | `last_cost` = costo unitario de la última entrada. |
+| CST-02 | `last_cost` = costo unitario de la última entrada. Si aún no hay entradas, toma el costo de la existencia inicial (o del primer ajuste positivo). |
 | CST-03 | Salidas, consumos y mermas se valoran al costo promedio **vigente en ese momento**; ese costo queda congelado en el movimiento y en el consumo. |
 | CST-04 | Reservas y liberaciones no tienen valor monetario. |
 | CST-05 | Costo estimado de una OT = Σ (cantidad planificada × costo promedio al planificar). |
