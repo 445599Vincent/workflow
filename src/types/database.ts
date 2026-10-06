@@ -2282,6 +2282,15 @@ export type Database = {
         };
       };
       refresh_work_order_actual_cost: { Args: { p_work_order_id: string }; Returns: undefined };
+      register_warehouse_waste: {
+        Args: {
+          p_material_id: string;
+          p_notes?: string;
+          p_quantity: number;
+          p_reason: Database["public"]["Enums"]["waste_reason"];
+        };
+        Returns: string;
+      };
       register_waste: {
         Args: {
           p_material_id: string;
@@ -2342,6 +2351,16 @@ export type Database = {
         };
         Returns: string;
       };
+      void_consumption: {
+        Args: { p_consumption_id: string; p_reason: string };
+        Returns: Database["public"]["Tables"]["material_consumptions"]["Row"];
+        SetofOptions: {
+          from: "*";
+          to: "material_consumptions";
+          isOneToOne: true;
+          isSetofReturn: false;
+        };
+      };
       void_inventory_receipt: {
         Args: { p_reason: string; p_receipt_id: string };
         Returns: {
@@ -2363,6 +2382,16 @@ export type Database = {
         SetofOptions: {
           from: "*";
           to: "inventory_receipts";
+          isOneToOne: true;
+          isSetofReturn: false;
+        };
+      };
+      void_waste: {
+        Args: { p_reason: string; p_waste_id: string };
+        Returns: Database["public"]["Tables"]["waste_records"]["Row"];
+        SetofOptions: {
+          from: "*";
+          to: "waste_records";
           isOneToOne: true;
           isSetofReturn: false;
         };

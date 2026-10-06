@@ -573,6 +573,72 @@ select pg_temp.expect(
   (select status = 'in_production' and completed_at is null from public.work_orders where id = (select id from t_ids where key = 'ot1')),
   'administrators can reopen a completed order (back to production)');
 
+-- 6d. Voiding usage and warehouse waste (CON-05/06, MER-05/07) --------------------
+select pg_temp.act_as('00000000-0000-0000-0000-00000000000c'); -- production
+select pg_temp.expect_error(
+  $$select public.void_consumption((select id from public.material_consumptions where notes = 'Impresión de caras'), 'Error')$$,
+  '%No tiene permiso%');
+select pg_temp.expect_error(
+  $$select public.register_warehouse_waste((select id from t_ids where key = 'perfil'), 1, 'damage')$$,
+  '%No tiene permiso%');
+
+select pg_temp.act_as('00000000-0000-0000-0000-00000000000a'); -- admin
+select pg_temp.expect_error(
+  $$select public.void_consumption((select id from public.material_consumptions where notes = 'Impresión de caras'), '  ')$$,
+  '%motivo de la anulación%');
+
+select public.void_consumption(
+  (select id from public.material_consumptions where notes = 'Impresión de caras'), 'Se registró en la orden equivocada');
+
+select pg_temp.expect(
+  (select stock_on_hand = 137.5 and avg_cost = 320 from public.materials where id = (select id from t_ids where key = 'vinil'))
+  and (select consumed_quantity = 1 and actual_cost = 640
+         from public.work_order_materials where id = (select id from t_ids where key = 'line_vinil'))
+  and (select actual_material_cost = 840 from public.work_orders where id = (select id from t_ids where key = 'ot1'))
+  and (select voided_at is not null and void_reason = 'Se registró en la orden equivocada'
+         from public.material_consumptions where notes = 'Impresión de caras')
+  and (select movement_type = 'return' and quantity = 5 and unit_cost = 320 and total_cost = 1600
+         from public.inventory_movements order by seq desc limit 1)
+  and exists (select 1 from public.work_order_events where event_type = 'consumption_voided'),
+  'voiding a consumption returns the stock at its cost and reduces the line and order cost');
+
+select pg_temp.expect_error(
+  $$select public.void_consumption((select id from public.material_consumptions where notes = 'Impresión de caras'), 'Otra vez')$$,
+  '%ya fue anulado%');
+
+select public.void_waste((select id from public.waste_records where reason = 'cutting'), 'Pieza aprovechable');
+select pg_temp.expect(
+  (select waste_quantity = 0 and actual_cost = 320
+     from public.work_order_materials where id = (select id from t_ids where key = 'line_vinil'))
+  and (select actual_material_cost = 520 from public.work_orders where id = (select id from t_ids where key = 'ot1')),
+  'voiding an order waste takes it out of the actual cost');
+
+select pg_temp.expect_error(
+  $$select public.register_warehouse_waste((select id from t_ids where key = 'perfil'), 100, 'damage')$$,
+  '%Stock insuficiente%');
+select pg_temp.expect_error(
+  $$select public.register_warehouse_waste((select id from t_ids where key = 'perfil'), 1, 'other')$$,
+  '%Describa el motivo%');
+
+insert into t_ids
+select 'warehouse_waste', public.register_warehouse_waste((select id from t_ids where key = 'perfil'), 3, 'damage', 'Humedad');
+select pg_temp.expect(
+  (select stock_on_hand = 15 from public.materials where id = (select id from t_ids where key = 'perfil'))
+  and (select work_order_id is null and total_cost = 300 from public.waste_records
+        where id = (select id from t_ids where key = 'warehouse_waste')),
+  'warehouse waste (no order) takes the material out of available stock');
+
+select public.void_waste((select id from t_ids where key = 'warehouse_waste'), 'Se recuperó');
+select pg_temp.expect(
+  (select stock_on_hand = 18 from public.materials where id = (select id from t_ids where key = 'perfil')),
+  'warehouse waste can be voided');
+
+select public.change_work_order_status((select id from t_ids where key = 'ot1'), 'completed');
+select pg_temp.expect_error(
+  $$select public.void_consumption(
+      (select id from public.material_consumptions where voided_at is null and material_id = (select id from t_ids where key = 'vinil')), 'Tarde')$$,
+  '%no admite esta operación%');
+
 -- Ledger invariants after all the activity.
 select pg_temp.expect(
   (select bool_and(m.stock_on_hand = coalesce(l.on_hand, 0) and m.stock_reserved = coalesce(l.reserved, 0))
