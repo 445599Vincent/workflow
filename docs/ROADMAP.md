@@ -48,9 +48,14 @@ antes de continuar. Leyenda: ✅ hecho · 🟡 parcial · ⬜ pendiente.
 - ✅ Historial de la orden (estados, planificación, reservas, consumos, mermas)
 - ✅ Uso desde tablet/celular en la página de la orden (botones por material)
 - ✅ Pruebas de BD de la ejecución (transiciones, reservas, consumo, merma, cierre, roles, invariantes del libro)
-- ⬜ Fase 3b: anular un consumo o merma con devolución al stock (CON-05)
-- ⬜ Fase 3b: merma de almacén sin orden (MER-05; hoy se registra como ajuste negativo)
-- ⬜ Fase 3b: vista "Mis órdenes en producción" para operarios
+
+## Fase 3b — Correcciones y merma de almacén ✅
+
+- ✅ Migración 012: `void_consumption`, `void_waste`, `register_warehouse_waste` (D-028, D-029)
+- ✅ Anular consumos y mermas desde la orden (con motivo; devolución al mismo costo)
+- ✅ Pantalla Mermas (`/movements/waste`): mermas de órdenes y de almacén, filtros y total
+- ✅ Merma de almacén sin orden, solo del disponible
+- ✅ Filtro "Asignadas a mí" en órdenes
 
 ## Fase 4 — Analítica ⬜
 
@@ -72,10 +77,10 @@ antes de continuar. Leyenda: ✅ hecho · 🟡 parcial · ⬜ pendiente.
 
 ## Siguiente paso recomendado
 
-1. Aplicar la migración 011 en Supabase de producción (README → Actualizar una base ya instalada).
+1. Aplicar las migraciones 011 y 012 en Supabase de producción (README → Actualizar una base ya instalada).
 2. Validar con producción el flujo completo de una orden real: planificar, reservar, consumir,
    registrar merma y terminar; revisar el costo real contra lo esperado.
-3. Fase 3b (anulación de consumos, merma de almacén) o Fase 4 (reportes y alertas), según prioridad del negocio.
+3. Fase 4: reportes, alertas y dashboard de costos.
 
 ## Pendientes de decisión con el negocio
 

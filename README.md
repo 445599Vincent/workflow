@@ -81,8 +81,9 @@ orden, que todavía no se hayan aplicado (con CLI: `npx supabase db push` lo hac
 automáticamente). Nunca volver a ejecutar una migración ya aplicada.
 
 > **Desde la versión con Fase 2/Usuarios (migraciones hasta 010):** aplicar
-> `…_011_work_order_execution.sql`. Desde ese cambio el estado de una orden solo
-> se modifica con la función `change_work_order_status` (la app ya la usa).
+> `…_011_work_order_execution.sql` y luego `…_012_usage_voiding_warehouse_waste.sql`.
+> Desde la 011 el estado de una orden solo se modifica con la función
+> `change_work_order_status` (la app ya la usa).
 
 ### Primer administrador
 
@@ -172,11 +173,12 @@ Detalle en [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md#5-capas-y-estructura-de-c
 
 ## Estado actual
 
-Fases 0, 1, 2 y 3 completas: **Usuarios**, **Materias primas** (con kardex),
+Fases 0, 1, 2, 3 y 3b completas: **Usuarios**, **Materias primas** (con kardex),
 **Proveedores**, **Compras / Entradas** (con anulación), **Ajustes**,
-**Movimientos**, catálogos en **Configuración**, **Clientes** y **Órdenes de
-trabajo** (materiales planificados, reservas, consumo, merma, costo real en vivo,
-cierre, cancelación y reapertura). Ver [docs/ROADMAP.md](docs/ROADMAP.md).
+**Movimientos**, **Mermas** (de órdenes y de almacén), catálogos en
+**Configuración**, **Clientes** y **Órdenes de trabajo** (materiales planificados,
+reservas, consumo, merma, anulaciones, costo real en vivo, cierre, cancelación y
+reapertura). Ver [docs/ROADMAP.md](docs/ROADMAP.md).
 
 ## Convenciones de commits
 
