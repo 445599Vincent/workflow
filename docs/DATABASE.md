@@ -192,19 +192,22 @@ Efecto de cada tipo:
 **`work_orders`** — `id`, `number` (OT-000001), `customer_id`, `title`,
 `description`, `status`, `priority`, `due_date`, `responsible_id → profiles`,
 `started_at`, `completed_at`, `cancelled_at`, `cancel_reason`,
-`estimated_material_cost` (cache), `actual_material_cost` (cache, se fija al cerrar),
+`estimated_material_cost` (cache), `actual_material_cost` (cache en vivo: consumo +
+merma, D-026; queda definitivo al cerrar porque ya no se aceptan consumos),
 `external_source`, `external_id`, auditoría.
 
 **`work_order_events`** (timeline, inmutable) — `id`, `work_order_id`,
-`event_type` (`created`, `status_changed`, `material_planned`, `reserved`,
-`released`, `consumed`, `waste`, `closed`, `note`…), `from_status`, `to_status`,
-`payload jsonb`, `note`, `created_by`, `created_at`.
+`event_type` (`created`, `status_changed`, `material_planned`, `material_updated`,
+`material_removed`, `material_unplanned`, `reserved`, `released`, `consumed`,
+`waste`), `from_status`, `to_status`, `payload jsonb` (material, cantidad, costo,
+motivo), `note`, `created_by`, `created_at`. Lo escriben solo triggers y RPC.
 
 **`work_order_materials`** (materiales planificados) — `id`, `work_order_id`,
 `material_id` (único por OT), `planned_quantity`, `estimated_unit_cost`
 (snapshot del promedio al planificar), `estimated_total_cost` (generada),
-`reserved_quantity`, `consumed_quantity`, `waste_quantity` (caches mantenidos por
-RPC), `notes`, auditoría.
+`reserved_quantity`, `consumed_quantity`, `waste_quantity`, `actual_cost` (caches
+mantenidos por RPC), `is_planned` (falso = línea creada al consumir un material no
+planificado, D-024; estimado 0), `notes`, auditoría.
 
 **`material_reservations`** — `id`, `work_order_id`, `work_order_material_id`,
 `material_id`, `quantity`, `remaining_quantity` (aún reservado),
@@ -259,7 +262,12 @@ Nadie puede modificar ni borrar registros de auditoría.
 | `void_inventory_receipt(entrada, motivo)` | sí | Anula una entrada: una salida de reverso por línea al costo original (revierte el promedio). Todo o nada; requiere `inventory.void`. |
 | `get_dashboard_summary()` | sí | KPIs del dashboard en una sola llamada. |
 | `get_top_consumed_materials(desde, límite)` | sí | Materiales con mayor consumo + merma (por costo) desde una fecha; por defecto, el mes en curso. |
-| `reserve_material`, `release_reservation`, `consume_material`, `register_waste`, `change_work_order_status`, `close_work_order` | Fase 3 | Contratos definidos en BUSINESS_RULES. |
+| `reserve_material(línea, cantidad, nota)` | sí | Reserva sobre el disponible (`work_orders.reserve`); orden abierta y no terminada. |
+| `release_reservation(línea, cantidad?, nota)` | sí | Libera lo reservado (todo si la cantidad es nula), de la más reciente a la más antigua. |
+| `consume_material(orden, material, cantidad, nota)` | sí | Consumo útil (`work_orders.consume`), solo En producción / En instalación. Usa primero lo reservado (FIFO); si el material no está planificado crea su línea. Devuelve el id del consumo. |
+| `register_waste(orden, material, cantidad, motivo, nota)` | sí | Merma con motivo (Otro exige nota); mismas reglas que el consumo. |
+| `change_work_order_status(orden, estado, nota)` | sí | Único camino para cambiar el estado (D-025). Terminar exige `work_orders.close`; reabrir, `work_orders.reopen`; lo demás, `work_orders.manage`. Cancelar exige motivo. Terminar o cancelar libera las reservas. |
+| `lock_work_order`, `ensure_work_order_line`, `use_material_on_order`, `release_line_reservations`, `refresh_work_order_actual_cost` | **no** | Internas de la ejecución (011). Bloquean la orden antes que los materiales (D-027). |
 
 ## 6. Vistas
 
@@ -281,7 +289,7 @@ Todas con `security_invoker = true` (respetan RLS del usuario).
 | customers | usuario activo | `customers.manage` | `customers.manage` | — |
 | materials | usuario activo | (RPC `create_material`) | `materials.manage` (sin saldos) | — |
 | inventory_* , material_*, waste_records | usuario activo | solo RPC | solo RPC | — |
-| work_orders | usuario activo | `work_orders.manage` | `work_orders.manage` (estado/costos guardados por trigger) | — |
+| work_orders | usuario activo | `work_orders.manage` | `work_orders.manage` (sin `status` ni `cancel_reason`: solo vía `change_work_order_status`; costos guardados por trigger) | — |
 | work_order_materials | usuario activo | `work_orders.manage` | `work_orders.manage` | `work_orders.manage`, solo líneas sin reservas, consumos ni mermas (dato de planificación, auditado) |
 | work_order_events | usuario activo | solo RPC/trigger | — | — |
 | app_settings, document_sequences | usuario activo | — | `settings.manage` | — |
@@ -302,6 +310,7 @@ Todas con `security_invoker = true` (respetan RLS del usuario).
 | `…_008_receipt_voiding.sql` | `void_inventory_receipt` (anulación de entradas). |
 | `…_009_kardex_material_columns.sql` | Columnas del material en `material_kardex`. |
 | `…_010_profile_password_change.sql` | `profiles.must_change_password` y su regla en el trigger de perfiles. |
+| `…_011_work_order_execution.sql` | Ejecución de órdenes: `is_planned` y `actual_cost` en líneas, reglas de transición de estado, timeline de planificación y RPC de reserva, liberación, consumo, merma y cambio de estado. |
 
 **Regla para nuevas migraciones:** nunca editar una migración ya aplicada en un
 entorno; crear una nueva. Toda tabla nueva debe activar RLS y otorgar permisos

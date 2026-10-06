@@ -32,16 +32,25 @@ antes de continuar. Leyenda: ✅ hecho · 🟡 parcial · ⬜ pendiente.
 - ✅ Ajustes de inventario con motivo, vista previa y excepción de stock negativo solo para administrador
 - ✅ Movimientos: libro mayor global con búsqueda y filtros por tipo y fecha
 - ✅ Anulación de entradas (`void_inventory_receipt`, con motivo y reverso del costo promedio)
-- ✅ Pruebas automáticas de reglas de base de datos (`supabase/tests/inventory_rules_test.sql`, 61 aserciones, en CI)
+- ✅ Pruebas automáticas de reglas de base de datos (`supabase/tests/inventory_rules_test.sql`, en CI)
 
-## Fase 3 — Órdenes de trabajo ⬜
+## Fase 3 — Órdenes de trabajo ✅
 
-- ⬜ Clientes (CRUD mínimo)
-- ⬜ Órdenes: crear, editar, cambiar estado, timeline
-- ⬜ Materiales planificados
-- ⬜ RPC: `reserve_material`, `release_reservation`, `consume_material`, `register_waste`, `change_work_order_status`, `close_work_order`
-- ⬜ Pantalla de producción simplificada (registrar consumo/merma desde tablet/celular)
-- ⬜ Cierre con resumen estimado vs real
+- ✅ Clientes: listar, buscar, crear, editar, desactivar
+- ✅ Órdenes: listar con filtros (abiertas, atrasadas, por estado, cliente), crear, editar
+- ✅ Materiales planificados: agregar, cambiar cantidad estimada, quitar (si no tiene movimientos)
+- ✅ Migración 011 y RPC: `reserve_material`, `release_reservation`, `consume_material`,
+  `register_waste`, `change_work_order_status` (el cierre es un cambio de estado, D-025)
+- ✅ Reservas: el consumo usa primero lo reservado; al terminar o cancelar se liberan las sobrantes
+- ✅ Consumo y merma por línea o de cualquier material (línea "no planificada", D-024)
+- ✅ Costo real en vivo (consumo + merma) y variación contra el umbral configurado
+- ✅ Estados: avanzar, retroceder un paso, terminar con resumen, cancelar con motivo, reabrir (administrador)
+- ✅ Historial de la orden (estados, planificación, reservas, consumos, mermas)
+- ✅ Uso desde tablet/celular en la página de la orden (botones por material)
+- ✅ Pruebas de BD de la ejecución (transiciones, reservas, consumo, merma, cierre, roles, invariantes del libro)
+- ⬜ Fase 3b: anular un consumo o merma con devolución al stock (CON-05)
+- ⬜ Fase 3b: merma de almacén sin orden (MER-05; hoy se registra como ajuste negativo)
+- ⬜ Fase 3b: vista "Mis órdenes en producción" para operarios
 
 ## Fase 4 — Analítica ⬜
 
@@ -63,14 +72,15 @@ antes de continuar. Leyenda: ✅ hecho · 🟡 parcial · ⬜ pendiente.
 
 ## Siguiente paso recomendado
 
-1. Crear el proyecto Supabase de producción, aplicar migraciones y crear el primer administrador (README).
-2. Conectar Vercel y validar con el equipo de almacén el flujo completo de inventario con datos reales.
-3. Comenzar la Fase 3: clientes y órdenes de trabajo (crear, planificar materiales, estados).
+1. Aplicar la migración 011 en Supabase de producción (README → Actualizar una base ya instalada).
+2. Validar con producción el flujo completo de una orden real: planificar, reservar, consumir,
+   registrar merma y terminar; revisar el costo real contra lo esperado.
+3. Fase 3b (anulación de consumos, merma de almacén) o Fase 4 (reportes y alertas), según prioridad del negocio.
 
 ## Pendientes de decisión con el negocio
 
 1. ¿Las entradas requieren aprobación de un supervisor o se registran directamente?
-2. ¿Quién puede reabrir una OT terminada?
+2. ¿Quién puede reabrir una OT terminada? (hoy: Administrador, permiso `work_orders.reopen`)
 3. Umbrales de alerta definitivos (variación de consumo y merma).
 4. ¿Se manejarán varios almacenes/sucursales? (hoy: un almacén con ubicaciones)
 5. Lista definitiva de categorías y unidades.

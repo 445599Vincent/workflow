@@ -80,6 +80,10 @@ orden) en el SQL Editor del panel de Supabase.
 orden, que todavía no se hayan aplicado (con CLI: `npx supabase db push` lo hace
 automáticamente). Nunca volver a ejecutar una migración ya aplicada.
 
+> **Desde la versión con Fase 2/Usuarios (migraciones hasta 010):** aplicar
+> `…_011_work_order_execution.sql`. Desde ese cambio el estado de una orden solo
+> se modifica con la función `change_work_order_status` (la app ya la usa).
+
 ### Primer administrador
 
 No hay registro público. Para crear el primer usuario:
@@ -168,10 +172,11 @@ Detalle en [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md#5-capas-y-estructura-de-c
 
 ## Estado actual
 
-Fase 0 completa; Fase 1 casi completa (falta la pantalla de Usuarios); Fase 2
-completa: **Materias primas** (con kardex), **Proveedores**, **Compras / Entradas**
-(con anulación), **Ajustes**, **Movimientos** y catálogos en **Configuración**.
-Ver [docs/ROADMAP.md](docs/ROADMAP.md).
+Fases 0, 1, 2 y 3 completas: **Usuarios**, **Materias primas** (con kardex),
+**Proveedores**, **Compras / Entradas** (con anulación), **Ajustes**,
+**Movimientos**, catálogos en **Configuración**, **Clientes** y **Órdenes de
+trabajo** (materiales planificados, reservas, consumo, merma, costo real en vivo,
+cierre, cancelación y reapertura). Ver [docs/ROADMAP.md](docs/ROADMAP.md).
 
 ## Convenciones de commits
 
