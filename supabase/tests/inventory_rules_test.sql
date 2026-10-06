@@ -391,30 +391,34 @@ select pg_temp.expect(
 select pg_temp.act_as('00000000-0000-0000-0000-00000000000a'); -- back to admin
 
 -- 6. Work orders ------------------------------------------------------------------
+-- Acting as admin. Vinil: 139.5 m² @ 320, nothing reserved. Tornillo: -50.
 insert into public.work_orders (title, priority, due_date) values ('Letrero exterior Banco ABC', 'high', current_date - 3);
+insert into t_ids select 'ot1', id from public.work_orders where title = 'Letrero exterior Banco ABC';
 
 select pg_temp.expect(
   (select number = 'OT-000001' and status = 'draft' from public.work_orders),
   'work orders get an automatic number and start as draft');
 
 insert into public.work_order_materials (work_order_id, material_id, planned_quantity)
-select wo.id, (select id from t_ids where key = 'vinil'), 10 from public.work_orders wo;
+values ((select id from t_ids where key = 'ot1'), (select id from t_ids where key = 'vinil'), 10);
+insert into t_ids select 'line_vinil', id from public.work_order_materials;
 
 select pg_temp.expect(
   (select estimated_material_cost = 3200 from public.work_orders),
   'planned materials snapshot the average cost and update the estimate (10 × 320)');
 
-update public.work_orders set status = 'pending';
-update public.work_orders set status = 'in_production';
+select public.change_work_order_status((select id from t_ids where key = 'ot1'), 'pending');
+select public.change_work_order_status((select id from t_ids where key = 'ot1'), 'in_production', 'Arranca impresión');
 
 select pg_temp.expect(
   (select started_at is not null from public.work_orders)
-  and (select count(*) = 3 from public.work_order_events),
-  'status changes stamp started_at and are written to the timeline');
+  and (select count(*) = 4 from public.work_order_events)
+  and exists (select 1 from public.work_order_events where note = 'Arranca impresión'),
+  'status changes stamp started_at and are written to the timeline with their note');
 
 select pg_temp.expect_error(
   $$update public.work_orders set status = 'completed'$$,
-  '%cerrar o cancelar%');
+  '%permission denied%');
 
 select pg_temp.expect_error(
   $$update public.work_orders set estimated_material_cost = 1$$,
@@ -425,6 +429,164 @@ select pg_temp.expect(
           and (s ->> 'inventory_value')::numeric = round(139.5 * 320, 2) + round(-50 * 4.5, 2)
      from public.get_dashboard_summary() s),
   'dashboard summary computes KPIs');
+
+-- 6a. Transitions (OT-03) ---------------------------------------------------------
+insert into public.work_orders (title) values ('Rotulación camiones');
+insert into t_ids select 'ot2', id from public.work_orders where title = 'Rotulación camiones';
+
+select pg_temp.expect_error(
+  $$select public.change_work_order_status((select id from t_ids where key = 'ot2'), 'completed')$$,
+  '%Solo se puede terminar%');
+
+select public.change_work_order_status((select id from t_ids where key = 'ot2'), 'planned'); -- forward jump
+
+select pg_temp.expect_error(
+  $$select public.change_work_order_status((select id from t_ids where key = 'ot2'), 'draft')$$,
+  '%retroceder un paso%');
+
+select public.change_work_order_status((select id from t_ids where key = 'ot2'), 'pending'); -- one step back
+
+select pg_temp.expect(
+  (select status = 'pending' from public.work_orders where id = (select id from t_ids where key = 'ot2')),
+  'orders move forward freely and back one step');
+
+-- 6b. Reservations, consumption and waste -------------------------------------------
+select public.reserve_material((select id from t_ids where key = 'line_vinil'), 8);
+
+select pg_temp.expect(
+  (select stock_reserved = 8 and stock_available = 131.5 and stock_on_hand = 139.5
+     from public.materials where id = (select id from t_ids where key = 'vinil'))
+  and (select reserved_quantity = 8 from public.work_order_materials where id = (select id from t_ids where key = 'line_vinil')),
+  'reserving moves stock from available to reserved without touching physical stock');
+
+select pg_temp.expect_error(
+  $$select public.reserve_material((select id from t_ids where key = 'line_vinil'), 500)$$,
+  '%Stock insuficiente%');
+
+select public.consume_material((select id from t_ids where key = 'ot1'), (select id from t_ids where key = 'vinil'), 5, 'Impresión de caras');
+
+select pg_temp.expect(
+  (select stock_on_hand = 134.5 and stock_reserved = 3
+     from public.materials where id = (select id from t_ids where key = 'vinil'))
+  and (select consumed_quantity = 5 and reserved_quantity = 3 and actual_cost = 1600
+         from public.work_order_materials where id = (select id from t_ids where key = 'line_vinil'))
+  and (select actual_material_cost = 1600 from public.work_orders where id = (select id from t_ids where key = 'ot1')),
+  'consumption draws the order reservation first and updates the actual cost live');
+
+select public.register_waste((select id from t_ids where key = 'ot1'), (select id from t_ids where key = 'vinil'), 1, 'cutting');
+
+select pg_temp.expect(
+  (select waste_quantity = 1 and reserved_quantity = 2 and actual_cost = 1920
+     from public.work_order_materials where id = (select id from t_ids where key = 'line_vinil'))
+  and (select count(*) = 1 from public.waste_records where reason = 'cutting' and total_cost = 320),
+  'waste is recorded independently and adds to the actual cost');
+
+select pg_temp.expect_error(
+  $$select public.register_waste((select id from t_ids where key = 'ot1'), (select id from t_ids where key = 'vinil'), 1, 'other')$$,
+  '%Describa el motivo%');
+
+insert into t_ids
+select 'perfil', (public.create_material(
+  p_name => 'Perfil de aluminio', p_category_id => (select id from t_ids where key = 'cat'),
+  p_base_unit_id => (select id from t_ids where key = 'und'),
+  p_opening_quantity => 20, p_opening_unit_cost => 100)).id;
+
+select public.consume_material((select id from t_ids where key = 'ot1'), (select id from t_ids where key = 'perfil'), 2);
+
+select pg_temp.expect(
+  (select not is_planned and planned_quantity = 0 and consumed_quantity = 2 and actual_cost = 200
+     from public.work_order_materials where material_id = (select id from t_ids where key = 'perfil'))
+  and (select actual_material_cost = 2120 from public.work_orders where id = (select id from t_ids where key = 'ot1')),
+  'unplanned consumption adds an unplanned line that counts in the actual cost');
+
+select public.release_reservation((select id from t_ids where key = 'line_vinil'), 1);
+select public.release_reservation((select id from t_ids where key = 'line_vinil'));
+
+select pg_temp.expect(
+  (select stock_reserved = 0 from public.materials where id = (select id from t_ids where key = 'vinil'))
+  and (select bool_and(remaining_quantity = 0 and status <> 'active') from public.material_reservations),
+  'releasing (partially, then the rest) returns reserved stock to available');
+
+select pg_temp.expect_error(
+  $$select public.release_reservation((select id from t_ids where key = 'line_vinil'))$$,
+  '%no tiene reservas activas%');
+
+select public.reserve_material((select id from t_ids where key = 'line_vinil'), 2);
+
+-- Production can consume but cannot reserve or change status.
+select pg_temp.act_as('00000000-0000-0000-0000-00000000000c'); -- production
+select public.consume_material((select id from t_ids where key = 'ot1'), (select id from t_ids where key = 'vinil'), 1);
+select pg_temp.expect_error(
+  $$select public.reserve_material((select id from t_ids where key = 'line_vinil'), 1)$$,
+  '%No tiene permiso%');
+select pg_temp.expect_error(
+  $$select public.change_work_order_status((select id from t_ids where key = 'ot1'), 'in_installation')$$,
+  '%No tiene permiso%');
+
+select pg_temp.act_as('00000000-0000-0000-0000-00000000000d'); -- viewer
+select pg_temp.expect_error(
+  $$select public.consume_material((select id from t_ids where key = 'ot1'), (select id from t_ids where key = 'vinil'), 1)$$,
+  '%No tiene permiso%');
+
+select pg_temp.act_as('00000000-0000-0000-0000-00000000000a'); -- admin
+
+select pg_temp.expect_error(
+  $$select public.consume_material((select id from t_ids where key = 'ot2'), (select id from t_ids where key = 'vinil'), 1)$$,
+  '%no admite esta operación%');
+
+-- 6c. Closing and cancelling (CIE, OT-07) ------------------------------------------
+select public.change_work_order_status((select id from t_ids where key = 'ot1'), 'completed', 'Instalado');
+
+select pg_temp.expect(
+  (select status = 'completed' and completed_at is not null and actual_material_cost = 2440
+     from public.work_orders where id = (select id from t_ids where key = 'ot1'))
+  and (select stock_reserved = 0 from public.materials where id = (select id from t_ids where key = 'vinil')),
+  'closing releases leftover reservations and keeps the final actual cost (5+1+1 m² × 320 + 200)');
+
+select pg_temp.expect_error(
+  $$select public.consume_material((select id from t_ids where key = 'ot1'), (select id from t_ids where key = 'vinil'), 1)$$,
+  '%no admite esta operación%');
+
+select pg_temp.expect_error(
+  $$update public.work_order_materials set planned_quantity = 12 where id = (select id from t_ids where key = 'line_vinil')$$,
+  '%orden cerrada%');
+
+insert into public.work_order_materials (work_order_id, material_id, planned_quantity)
+values ((select id from t_ids where key = 'ot2'), (select id from t_ids where key = 'perfil'), 3);
+select public.reserve_material(
+  (select id from public.work_order_materials where work_order_id = (select id from t_ids where key = 'ot2')), 3);
+
+select pg_temp.expect_error(
+  $$select public.change_work_order_status((select id from t_ids where key = 'ot2'), 'cancelled')$$,
+  '%motivo de la cancelación%');
+
+select public.change_work_order_status((select id from t_ids where key = 'ot2'), 'cancelled', 'Cliente desistió');
+
+select pg_temp.expect(
+  (select status = 'cancelled' and cancel_reason = 'Cliente desistió'
+     from public.work_orders where id = (select id from t_ids where key = 'ot2'))
+  and (select stock_reserved = 0 from public.materials where id = (select id from t_ids where key = 'perfil')),
+  'cancelling requires a reason and releases the order reservations');
+
+select public.change_work_order_status((select id from t_ids where key = 'ot1'), 'in_production', 'Faltó un tornillo');
+select pg_temp.expect(
+  (select status = 'in_production' and completed_at is null from public.work_orders where id = (select id from t_ids where key = 'ot1')),
+  'administrators can reopen a completed order (back to production)');
+
+-- Ledger invariants after all the activity.
+select pg_temp.expect(
+  (select bool_and(m.stock_on_hand = coalesce(l.on_hand, 0) and m.stock_reserved = coalesce(l.reserved, 0))
+     from public.materials m
+     left join (select material_id, sum(on_hand_delta) as on_hand, sum(reserved_delta) as reserved
+                from public.inventory_movements group by material_id) l on l.material_id = m.id),
+  'cached physical and reserved stock always equal the ledger');
+
+select pg_temp.expect(
+  (select bool_and(m.stock_reserved = coalesce(w.reserved, 0))
+     from public.materials m
+     left join (select material_id, sum(reserved_quantity) as reserved
+                from public.work_order_materials group by material_id) w on w.material_id = m.id),
+  'reserved stock equals what open orders hold');
 
 -- 7. Anonymous access -------------------------------------------------------------
 select pg_temp.act_as_system();

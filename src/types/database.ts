@@ -1667,12 +1667,14 @@ export type Database = {
       };
       work_order_materials: {
         Row: {
+          actual_cost: number;
           consumed_quantity: number;
           created_at: string;
           created_by: string | null;
           estimated_total_cost: number | null;
           estimated_unit_cost: number;
           id: string;
+          is_planned: boolean;
           material_id: string;
           notes: string | null;
           planned_quantity: number;
@@ -1683,12 +1685,14 @@ export type Database = {
           work_order_id: string;
         };
         Insert: {
+          actual_cost?: number;
           consumed_quantity?: number;
           created_at?: string;
           created_by?: string | null;
           estimated_total_cost?: never;
           estimated_unit_cost?: number;
           id?: string;
+          is_planned?: boolean;
           material_id: string;
           notes?: string | null;
           planned_quantity: number;
@@ -1699,12 +1703,14 @@ export type Database = {
           work_order_id: string;
         };
         Update: {
+          actual_cost?: number;
           consumed_quantity?: number;
           created_at?: string;
           created_by?: string | null;
           estimated_total_cost?: never;
           estimated_unit_cost?: number;
           id?: string;
+          is_planned?: boolean;
           material_id?: string;
           notes?: string | null;
           planned_quantity?: number;
@@ -2029,6 +2035,51 @@ export type Database = {
           isSetofReturn: false;
         };
       };
+      change_work_order_status: {
+        Args: {
+          p_note?: string;
+          p_status: Database["public"]["Enums"]["work_order_status"];
+          p_work_order_id: string;
+        };
+        Returns: {
+          actual_material_cost: number;
+          cancel_reason: string | null;
+          cancelled_at: string | null;
+          completed_at: string | null;
+          created_at: string;
+          created_by: string | null;
+          customer_id: string | null;
+          description: string | null;
+          due_date: string | null;
+          estimated_material_cost: number;
+          external_id: string | null;
+          external_source: string | null;
+          id: string;
+          number: string;
+          priority: Database["public"]["Enums"]["work_order_priority"];
+          responsible_id: string | null;
+          started_at: string | null;
+          status: Database["public"]["Enums"]["work_order_status"];
+          title: string;
+          updated_at: string;
+          updated_by: string | null;
+        };
+        SetofOptions: {
+          from: "*";
+          to: "work_orders";
+          isOneToOne: true;
+          isSetofReturn: false;
+        };
+      };
+      consume_material: {
+        Args: {
+          p_material_id: string;
+          p_notes?: string;
+          p_quantity: number;
+          p_work_order_id: string;
+        };
+        Returns: string;
+      };
       create_inventory_adjustment: {
         Args: {
           p_allow_negative?: boolean;
@@ -2108,6 +2159,36 @@ export type Database = {
         };
       };
       current_user_permissions: { Args: Record<PropertyKey, never>; Returns: string[] };
+      ensure_work_order_line: {
+        Args: {
+          p_material_id: string;
+          p_order: Database["public"]["Tables"]["work_orders"]["Row"];
+        };
+        Returns: {
+          actual_cost: number;
+          consumed_quantity: number;
+          created_at: string;
+          created_by: string | null;
+          estimated_total_cost: number | null;
+          estimated_unit_cost: number;
+          id: string;
+          is_planned: boolean;
+          material_id: string;
+          notes: string | null;
+          planned_quantity: number;
+          reserved_quantity: number;
+          updated_at: string;
+          updated_by: string | null;
+          waste_quantity: number;
+          work_order_id: string;
+        };
+        SetofOptions: {
+          from: "*";
+          to: "work_order_materials";
+          isOneToOne: true;
+          isSetofReturn: false;
+        };
+      };
       get_dashboard_summary: { Args: Record<PropertyKey, never>; Returns: Json };
       get_top_consumed_materials: {
         Args: { p_from?: string; p_limit?: number };
@@ -2123,6 +2204,41 @@ export type Database = {
       };
       has_permission: { Args: { p_permission: string }; Returns: boolean };
       is_active_user: { Args: Record<PropertyKey, never>; Returns: boolean };
+      lock_work_order: {
+        Args: {
+          p_allowed: Database["public"]["Enums"]["work_order_status"][];
+          p_work_order_id: string;
+        };
+        Returns: {
+          actual_material_cost: number;
+          cancel_reason: string | null;
+          cancelled_at: string | null;
+          completed_at: string | null;
+          created_at: string;
+          created_by: string | null;
+          customer_id: string | null;
+          description: string | null;
+          due_date: string | null;
+          estimated_material_cost: number;
+          external_id: string | null;
+          external_source: string | null;
+          id: string;
+          number: string;
+          priority: Database["public"]["Enums"]["work_order_priority"];
+          responsible_id: string | null;
+          started_at: string | null;
+          status: Database["public"]["Enums"]["work_order_status"];
+          title: string;
+          updated_at: string;
+          updated_by: string | null;
+        };
+        SetofOptions: {
+          from: "*";
+          to: "work_orders";
+          isOneToOne: true;
+          isSetofReturn: false;
+        };
+      };
       log_audit_event: {
         Args: {
           p_action: string;
@@ -2165,7 +2281,67 @@ export type Database = {
           isSetofReturn: false;
         };
       };
+      refresh_work_order_actual_cost: { Args: { p_work_order_id: string }; Returns: undefined };
+      register_waste: {
+        Args: {
+          p_material_id: string;
+          p_notes?: string;
+          p_quantity: number;
+          p_reason: Database["public"]["Enums"]["waste_reason"];
+          p_work_order_id: string;
+        };
+        Returns: string;
+      };
+      release_line_reservations: {
+        Args: {
+          p_line: Database["public"]["Tables"]["work_order_materials"]["Row"];
+          p_notes: string;
+          p_order: Database["public"]["Tables"]["work_orders"]["Row"];
+          p_quantity: number;
+        };
+        Returns: number;
+      };
+      release_reservation: {
+        Args: { p_notes?: string; p_quantity?: number; p_work_order_material_id: string };
+        Returns: number;
+      };
       require_permission: { Args: { p_permission: string }; Returns: undefined };
+      reserve_material: {
+        Args: { p_notes?: string; p_quantity: number; p_work_order_material_id: string };
+        Returns: {
+          created_at: string;
+          created_by: string | null;
+          id: string;
+          material_id: string;
+          movement_id: string;
+          notes: string | null;
+          quantity: number;
+          released_at: string | null;
+          remaining_quantity: number;
+          status: Database["public"]["Enums"]["reservation_status"];
+          updated_at: string;
+          updated_by: string | null;
+          work_order_id: string;
+          work_order_material_id: string;
+        };
+        SetofOptions: {
+          from: "*";
+          to: "material_reservations";
+          isOneToOne: true;
+          isSetofReturn: false;
+        };
+      };
+      use_material_on_order: {
+        Args: {
+          p_kind: Database["public"]["Enums"]["movement_type"];
+          p_material_id: string;
+          p_notes: string;
+          p_quantity: number;
+          p_reason: Database["public"]["Enums"]["waste_reason"];
+          p_work_order_id: string;
+        };
+        Returns: string;
+      };
       void_inventory_receipt: {
         Args: { p_reason: string; p_receipt_id: string };
         Returns: {
@@ -2190,6 +2366,10 @@ export type Database = {
           isOneToOne: true;
           isSetofReturn: false;
         };
+      };
+      work_order_status_rank: {
+        Args: { p_status: Database["public"]["Enums"]["work_order_status"] };
+        Returns: number;
       };
     };
     Enums: {
