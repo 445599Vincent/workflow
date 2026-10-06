@@ -95,7 +95,7 @@ Consecuencias:
 3. **Nada crítico se borra.** Se usa `is_active`, anulación (`voided_at`) o
    movimientos de reverso. Las tablas de libro mayor rechazan `UPDATE`/`DELETE`.
 4. **Server-first.** Lecturas en Server Components; el cliente solo recibe lo
-   necesario. No se expone la `service_role` key a la aplicación.
+   necesario. La `service_role` key nunca llega al navegador (ver D-022).
 5. **Simplicidad para el almacén.** Pocas pantallas, acciones claras, lenguaje del
    negocio en español, números grandes y legibles.
 
@@ -181,8 +181,8 @@ líneas), los materiales se bloquean en orden de `id` para evitar interbloqueos.
 ## 7. Seguridad
 
 - **Autenticación:** Supabase Auth (email + contraseña). No hay registro público:
-  los usuarios los crea un administrador (invitación desde Supabase en Fase 1,
-  pantalla de Usuarios en Fase 2).
+  los usuarios los crea un administrador desde la pantalla **Usuarios** con una
+  contraseña temporal, que el usuario debe cambiar en su primer ingreso (D-023).
 - **Autorización:** rol por usuario (`profiles.role_code`) y permisos por rol
   (`role_permissions`). La función SQL `has_permission('materials.manage')` se usa
   en las políticas RLS y en las RPC. La UI consulta los mismos permisos solo para
@@ -191,8 +191,12 @@ líneas), los materiales se bloquean en orden de `id` para evitar interbloqueos.
 - **Validación doble:** zod en el cliente (UX) y en el servidor (Server Action),
   más `CHECK`/triggers/RPC en la base de datos.
 - **Secretos:** solo `NEXT_PUBLIC_SUPABASE_URL` y la clave pública
-  (`NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY`) llegan al navegador. La `service_role`
-  key no se usa en la aplicación.
+  (`NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY`) llegan al navegador. La
+  `SUPABASE_SERVICE_ROLE_KEY` es opcional y **solo del servidor**: la usa
+  únicamente `src/lib/supabase/admin.ts` para crear cuentas y cambiar contraseñas
+  en Supabase Auth, después de comprobar `users.manage` con la sesión del
+  administrador (D-022). Todo lo demás (roles, estado, datos) usa el JWT del
+  usuario y pasa por RLS.
 
 ### Roles
 
@@ -268,3 +272,5 @@ No se asume que ADM Cloud tenga API. Se prepara únicamente:
 | D-019 | Listados con filtros, orden y paginación en la URL, resueltos en el servidor. | Enlaces compartibles, botón "atrás" funcional y escalable a miles de materiales. |
 | D-020 | El formulario de entradas carga los materiales activos y filtra en el navegador. | Búsqueda instantánea y sin conexión entre teclas; adecuado hasta unos pocos miles de materiales. Si se supera, cambiar a búsqueda en el servidor. |
 | D-021 | Anular una entrada es todo o nada y se bloquea si el material ya se consumió. | Evita stock negativo silencioso; el supervisor corrige con un ajuste si el material ya se usó. |
+| D-022 | La creación de cuentas y el restablecimiento de contraseñas usan la `service_role` key en un módulo `server-only` (`lib/supabase/admin.ts`), solo después de verificar `users.manage` con la sesión del usuario. Rol, estado y nombre se cambian con la sesión del administrador (RLS + trigger), para que la auditoría registre quién lo hizo. Si la clave no está configurada, la pantalla funciona en modo limitado (sin crear usuarios). | Supabase Auth no permite crear usuarios sin privilegios de servicio; limitarla a un archivo del servidor reduce la superficie de riesgo. |
+| D-023 | Usuarios nuevos reciben una contraseña temporal (no invitación por correo) y `profiles.must_change_password = true`; la app los lleva a cambiarla antes de usar el sistema. | El correo integrado de Supabase solo envía unos pocos mensajes por hora y únicamente a miembros del proyecto; así no depende de configurar SMTP. |
