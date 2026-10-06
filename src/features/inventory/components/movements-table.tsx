@@ -24,7 +24,11 @@ function Reference({ row }: { row: MovementRow }) {
         )}
         {row.reference ?? "—"}
       </p>
-      {row.notes && <p className="truncate text-xs text-muted-foreground">{row.notes}</p>}
+      {row.notes && (
+        <p className="truncate text-xs text-muted-foreground" title={row.notes}>
+          {row.notes}
+        </p>
+      )}
     </>
   );
 }
@@ -42,6 +46,7 @@ export function MovementsTable({ rows }: { rows: MovementRow[] }) {
                 <div className="min-w-0">
                   <Link
                     href={`/materials/${row.material_id}`}
+                    title={row.material_name ?? undefined}
                     className="block truncate font-medium hover:text-primary"
                   >
                     {row.material_name}

@@ -46,8 +46,10 @@ export function StockAlertsCard({ alerts }: { alerts: Alerts }) {
                   className="flex items-center justify-between gap-4 px-5 py-3 transition-colors hover:bg-muted/40"
                 >
                   <div className="min-w-0">
-                    <p className="truncate text-sm font-medium">{material.name}</p>
-                    <p className="text-xs text-muted-foreground">
+                    <p className="truncate text-sm font-medium" title={material.name ?? undefined}>
+                      {material.name}
+                    </p>
+                    <p className="text-xs [overflow-wrap:anywhere] text-muted-foreground">
                       {material.sku} · Mínimo{" "}
                       {formatQuantityWithUnit(
                         material.min_stock,

@@ -10,7 +10,7 @@ import {
 } from "lucide-react";
 
 import { StatCard } from "@/components/shared/stat-card";
-import { formatMoney, formatPercent } from "@/lib/format";
+import { formatMoney, formatPercent, pluralize } from "@/lib/format";
 import type { DashboardSummary } from "../queries";
 
 export function KpiGrid({ summary }: { summary: DashboardSummary }) {
@@ -40,7 +40,7 @@ export function KpiGrid({ summary }: { summary: DashboardSummary }) {
         label="Valor de inventario"
         value={formatMoney(summary.inventory_value)}
         icon={WalletIcon}
-        hint={`${summary.active_materials} materiales activos`}
+        hint={pluralize(summary.active_materials, "material activo", "materiales activos")}
         href="/inventory"
       />
       <StatCard

@@ -33,14 +33,14 @@ export default async function DashboardPage() {
     getAlerts(),
     getMonthlyTrend(),
   ]);
-  const firstName = user.fullName.split(" ")[0];
+  const firstName = user.fullName.trim().split(/\s+/)[0];
   const today = formatLongDate();
 
   return (
     <div className="space-y-8">
       <PageHeader
         eyebrow={today.charAt(0).toUpperCase() + today.slice(1)}
-        title={`Hola, ${firstName}`}
+        title={firstName ? `Hola, ${firstName}` : "Hola"}
         description="Resumen de inventario y órdenes de trabajo."
         actions={
           can(user, "materials.manage") && (

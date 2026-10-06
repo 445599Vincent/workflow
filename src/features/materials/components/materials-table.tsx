@@ -45,14 +45,16 @@ export function MaterialsTable({ rows, params }: MaterialsTableProps) {
             <Link href={`/materials/${row.id}`} className="block px-4 py-3 active:bg-muted/60">
               <div className="flex items-start justify-between gap-3">
                 <div className="min-w-0">
-                  <p className="truncate font-medium">{row.name}</p>
-                  <p className="text-xs text-muted-foreground">
+                  <p className="truncate font-medium" title={row.name ?? undefined}>
+                    {row.name}
+                  </p>
+                  <p className="text-xs [overflow-wrap:anywhere] text-muted-foreground">
                     {row.sku} · {row.category_name}
                   </p>
                 </div>
                 <StockStatusBadge status={row.stock_status} />
               </div>
-              <dl className="mt-2 grid grid-cols-3 gap-2 text-xs">
+              <dl className="mt-2 grid grid-cols-2 gap-x-3 gap-y-2 text-xs min-[400px]:grid-cols-3">
                 <div>
                   <dt className="text-muted-foreground">Físico</dt>
                   <dd className="font-medium tabular-nums">
@@ -65,7 +67,7 @@ export function MaterialsTable({ rows, params }: MaterialsTableProps) {
                     {formatQuantity(row.stock_reserved, decimalsOf(row))}
                   </dd>
                 </div>
-                <div>
+                <div className="col-span-2 min-[400px]:col-span-1">
                   <dt className="text-muted-foreground">Disponible</dt>
                   <dd className="font-semibold tabular-nums">
                     {formatQuantityWithUnit(row.stock_available, row.unit_symbol, decimalsOf(row))}
@@ -120,7 +122,10 @@ export function MaterialsTable({ rows, params }: MaterialsTableProps) {
             {rows.map((row) => (
               <TableRow key={row.id} className={cn(!row.is_active && "text-muted-foreground")}>
                 <TableCell className="font-mono text-xs">{row.sku}</TableCell>
-                <TableCell className="max-w-44 truncate font-medium xl:max-w-64">
+                <TableCell
+                  title={row.name ?? undefined}
+                  className="max-w-44 truncate font-medium xl:max-w-64"
+                >
                   <Link
                     href={`/materials/${row.id}`}
                     className="hover:text-primary hover:underline"

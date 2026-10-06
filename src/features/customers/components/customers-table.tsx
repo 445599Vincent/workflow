@@ -31,13 +31,17 @@ export function CustomersTable({ rows, canManage }: { rows: CustomerRow[]; canMa
         {rows.map((row) => (
           <TableRow key={row.id} className={cn(!row.is_active && "text-muted-foreground")}>
             <TableCell className="max-w-64">
-              <p className="truncate font-medium">{row.name}</p>
+              <p className="truncate font-medium" title={row.name}>
+                {row.name}
+              </p>
               <p className="truncate text-xs text-muted-foreground">
                 {[row.code, row.tax_id && `RNC ${row.tax_id}`].filter(Boolean).join(" · ") || "—"}
               </p>
             </TableCell>
             <TableCell className="hidden max-w-56 md:table-cell">
-              <p className="truncate">{row.contact_name ?? "—"}</p>
+              <p className="truncate" title={row.contact_name ?? "—"}>
+                {row.contact_name ?? "—"}
+              </p>
               <p className="truncate text-xs text-muted-foreground">
                 {[row.phone, row.email].filter(Boolean).join(" · ")}
               </p>

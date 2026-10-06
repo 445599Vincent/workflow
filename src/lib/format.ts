@@ -25,14 +25,33 @@ function quantityFormatter(decimals: number) {
   return formatter;
 }
 
-/** RD$1,234.50 */
+const EMPTY = "—";
+
+function isNumber(value: number | null | undefined): value is number {
+  return typeof value === "number" && Number.isFinite(value);
+}
+
+/** Valid dates only: an invalid value would make Intl throw and take the page down. */
+function toDate(value: string | Date): Date | null {
+  const date = new Date(value);
+  return Number.isNaN(date.getTime()) ? null : date;
+}
+
+/** "1 material" / "3 materiales" (zero takes the plural, as in Spanish). */
+export function pluralize(count: number, singular: string, plural: string): string {
+  return `${formatQuantity(count, 0)} ${count === 1 ? singular : plural}`;
+}
+
+/** RD$1,234.50 · -RD$42.50 · "—" when the value is missing or not a number. */
 export function formatMoney(value: number | null | undefined): string {
-  return `${CURRENCY_SYMBOL}${moneyFormatter.format(value ?? 0)}`;
+  if (!isNumber(value)) return EMPTY;
+  const formatted = `${CURRENCY_SYMBOL}${moneyFormatter.format(Math.abs(value))}`;
+  return value < 0 && Math.abs(value) >= 0.005 ? `-${formatted}` : formatted;
 }
 
 /** 125.5 → "125.5"; respects the unit's allowed decimals. */
 export function formatQuantity(value: number | null | undefined, decimals = 4): string {
-  return quantityFormatter(decimals).format(value ?? 0);
+  return isNumber(value) ? quantityFormatter(decimals).format(value) : EMPTY;
 }
 
 /** 125.5, "m²" → "125.5 m²" */
@@ -42,31 +61,34 @@ export function formatQuantityWithUnit(
   decimals = 4,
 ): string {
   const quantity = formatQuantity(value, decimals);
-  return unitSymbol ? `${quantity} ${unitSymbol}` : quantity;
+  return unitSymbol && isNumber(value) ? `${quantity} ${unitSymbol}` : quantity;
 }
 
 export function formatPercent(value: number | null | undefined, fractionDigits = 1): string {
+  if (!isNumber(value)) return EMPTY;
   return new Intl.NumberFormat(LOCALE, {
     style: "percent",
     minimumFractionDigits: 0,
     maximumFractionDigits: fractionDigits,
-  }).format(value ?? 0);
+  }).format(value);
 }
 
 /** 06/10/2026 */
 export function formatDate(value: string | Date | null | undefined): string {
-  if (!value) return "—";
+  const date = value ? toDate(value) : null;
+  if (!date) return EMPTY;
   return new Intl.DateTimeFormat(LOCALE, {
     day: "2-digit",
     month: "2-digit",
     year: "numeric",
     timeZone: TIME_ZONE,
-  }).format(new Date(value));
+  }).format(date);
 }
 
 /** 06/10/2026 3:45 p. m. */
 export function formatDateTime(value: string | Date | null | undefined): string {
-  if (!value) return "—";
+  const date = value ? toDate(value) : null;
+  if (!date) return EMPTY;
   return new Intl.DateTimeFormat(LOCALE, {
     day: "2-digit",
     month: "2-digit",
@@ -74,7 +96,7 @@ export function formatDateTime(value: string | Date | null | undefined): string 
     hour: "numeric",
     minute: "2-digit",
     timeZone: TIME_ZONE,
-  }).format(new Date(value));
+  }).format(date);
 }
 
 /** "Ana Pérez" → "AP" */
@@ -82,9 +104,16 @@ export function initials(name: string): string {
   const parts = name.trim().split(/\s+/).filter(Boolean);
   const letters = parts.length > 1 ? [parts[0], parts[parts.length - 1]] : [parts[0] ?? "?"];
   return letters
-    .map((part) => part?.charAt(0) ?? "")
+    .map((part) => firstGrapheme(part ?? ""))
     .join("")
     .toUpperCase();
+}
+
+const segmenter = new Intl.Segmenter(undefined, { granularity: "grapheme" });
+
+/** First user-perceived character; `charAt(0)` would split emoji in half. */
+function firstGrapheme(text: string): string {
+  return segmenter.segment(text)[Symbol.iterator]().next().value?.segment ?? "";
 }
 
 /** Today's date (YYYY-MM-DD) in the business time zone. */
@@ -112,11 +141,10 @@ export function formatDuration(
   from: string | Date | null | undefined,
   to: string | Date = new Date(),
 ): string {
-  if (!from) return "—";
-  const minutes = Math.max(
-    0,
-    Math.round((new Date(to).getTime() - new Date(from).getTime()) / 60000),
-  );
+  if (!from) return EMPTY;
+  const elapsed = (new Date(to).getTime() - new Date(from).getTime()) / 60000;
+  if (Number.isNaN(elapsed)) return EMPTY;
+  const minutes = Math.max(0, Math.round(elapsed));
   const days = Math.floor(minutes / 1440);
   const hours = Math.floor((minutes % 1440) / 60);
   if (days > 0)

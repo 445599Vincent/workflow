@@ -41,7 +41,9 @@ export function WorkOrdersTable({ rows }: { rows: WorkOrderListRow[] }) {
               <div className="flex items-start justify-between gap-3">
                 <div className="min-w-0">
                   <p className="font-mono text-xs text-muted-foreground">{row.number}</p>
-                  <p className="truncate font-medium">{row.title}</p>
+                  <p className="truncate font-medium" title={row.title}>
+                    {row.title}
+                  </p>
                   <p className="truncate text-xs text-muted-foreground">
                     {row.customer?.name ?? "Sin cliente"}
                   </p>
@@ -76,7 +78,10 @@ export function WorkOrdersTable({ rows }: { rows: WorkOrderListRow[] }) {
                 <TableCell className="max-w-80">
                   <Link href={`/work-orders/${row.id}`} className="group block">
                     <span className="font-mono text-xs text-muted-foreground">{row.number}</span>
-                    <span className="block truncate font-medium group-hover:text-primary group-hover:underline">
+                    <span
+                      title={row.title}
+                      className="block truncate font-medium group-hover:text-primary group-hover:underline"
+                    >
                       {row.title}
                     </span>
                   </Link>

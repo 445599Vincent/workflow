@@ -29,7 +29,9 @@ export function TopConsumptionCard({ rows }: { rows: Rows }) {
             {rows.map((row) => (
               <li key={row.material_id} className="space-y-1.5">
                 <div className="flex items-baseline justify-between gap-4 text-sm">
-                  <span className="truncate font-medium">{row.name}</span>
+                  <span className="truncate font-medium" title={row.name}>
+                    {row.name}
+                  </span>
                   <span className="shrink-0 tabular-nums">{formatMoney(row.total_cost)}</span>
                 </div>
                 <div className="h-2 overflow-hidden rounded-full bg-muted">

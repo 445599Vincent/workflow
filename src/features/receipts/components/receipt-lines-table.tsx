@@ -31,6 +31,7 @@ export function ReceiptLinesTable({ lines, total }: { lines: ReceiptLine[]; tota
             <TableCell className="max-w-80">
               <Link
                 href={`/materials/${line.material.id}`}
+                title={line.material.name}
                 className="block truncate font-medium hover:text-primary hover:underline"
               >
                 {line.material.name}

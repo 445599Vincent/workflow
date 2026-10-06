@@ -9,6 +9,7 @@ import { AlertsList } from "@/features/alerts/components/alerts-list";
 import { AlertsSummary } from "@/features/alerts/components/alerts-summary";
 import { ALERT_KINDS, isAlertKind } from "@/features/alerts/labels";
 import { countAlerts, getAlerts } from "@/features/alerts/queries";
+import { pluralize } from "@/lib/format";
 import { requireUser } from "@/lib/auth/session";
 import { firstParam } from "@/lib/url";
 
@@ -36,7 +37,9 @@ export default async function AlertsPage({ searchParams }: PageProps<"/alerts">)
               {kind ? ALERT_KINDS[kind].label : "Todas las alertas"}
             </h2>
             <p className="text-sm text-muted-foreground">
-              {kind ? ALERT_KINDS[kind].description : `${alerts.length} alertas activas.`}
+              {kind
+                ? ALERT_KINDS[kind].description
+                : pluralize(alerts.length, "alerta activa", "alertas activas") + "."}
             </p>
           </div>
           {kind && (

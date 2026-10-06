@@ -85,7 +85,11 @@ export function KardexTable({ rows, unitSymbol, decimals }: KardexTableProps) {
                   )}
                   {row.reference ?? "—"}
                 </p>
-                {row.notes && <p className="truncate text-xs text-muted-foreground">{row.notes}</p>}
+                {row.notes && (
+                  <p className="truncate text-xs text-muted-foreground" title={row.notes}>
+                    {row.notes}
+                  </p>
+                )}
               </TableCell>
               <TableCell className="text-right font-medium text-success tabular-nums">
                 {onHandDelta > 0 ? `+${qty(onHandDelta)}` : ""}

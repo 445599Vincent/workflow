@@ -212,7 +212,12 @@ export default async function SupplierPage({ params }: PageProps<"/suppliers/[id
                     className="flex items-center justify-between gap-4 px-5 py-3 hover:bg-muted/40"
                   >
                     <div className="min-w-0">
-                      <p className="truncate text-sm font-medium">{material.name}</p>
+                      <p
+                        className="truncate text-sm font-medium"
+                        title={material.name ?? undefined}
+                      >
+                        {material.name}
+                      </p>
                       <p className="text-xs text-muted-foreground">
                         {material.sku} · Último costo {formatMoney(material.last_cost)}
                       </p>

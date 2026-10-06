@@ -31,7 +31,9 @@ export function AlertsList({ alerts }: { alerts: Alert[] }) {
               <div className="min-w-0 flex-1">
                 <p className="flex flex-wrap items-center gap-2 text-sm font-medium">
                   <span className="font-mono text-xs text-muted-foreground">{alert.reference}</span>
-                  <span className="truncate">{alert.title}</span>
+                  <span className="truncate" title={alert.title}>
+                    {alert.title}
+                  </span>
                   {alert.critical && <Badge variant="destructive">Crítica</Badge>}
                 </p>
                 <p className="text-sm text-muted-foreground">

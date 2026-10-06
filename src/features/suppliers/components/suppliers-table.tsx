@@ -22,7 +22,9 @@ export function SuppliersTable({ rows }: { rows: SupplierListRow[] }) {
             <Link href={`/suppliers/${row.id}`} className="block px-4 py-3 active:bg-muted/60">
               <div className="flex items-start justify-between gap-3">
                 <div className="min-w-0">
-                  <p className="truncate font-medium">{row.name}</p>
+                  <p className="truncate font-medium" title={row.name}>
+                    {row.name}
+                  </p>
                   <p className="truncate text-xs text-muted-foreground">
                     {[row.code, row.tax_id && `RNC ${row.tax_id}`].filter(Boolean).join(" · ") ||
                       "Sin código"}

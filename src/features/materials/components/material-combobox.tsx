@@ -144,7 +144,9 @@ export function MaterialCombobox({
                 )}
               />
               <span className="min-w-0 flex-1">
-                <span className="block truncate">{material.name}</span>
+                <span className="block truncate" title={material.name}>
+                  {material.name}
+                </span>
                 <span className="block text-xs text-muted-foreground">
                   {material.sku} · {material.unitName}
                 </span>

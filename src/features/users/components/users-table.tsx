@@ -54,7 +54,9 @@ export function UsersTable({ rows, roles, currentUserId, canResetPasswords }: Us
                     <span className="ml-2 text-xs font-normal text-muted-foreground">(usted)</span>
                   )}
                 </p>
-                <p className="truncate text-xs text-muted-foreground">{row.email}</p>
+                <p className="truncate text-xs text-muted-foreground" title={row.email}>
+                  {row.email}
+                </p>
                 <div className="mt-1 flex flex-wrap items-center gap-1.5 sm:hidden">
                   <span className="text-xs font-medium">{roleName(row.role_code)}</span>
                   <StatusBadges row={row} />

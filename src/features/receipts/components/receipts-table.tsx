@@ -72,7 +72,9 @@ export function ReceiptsTable({ rows }: { rows: ReceiptListRow[] }) {
                   </Link>
                 </TableCell>
                 <TableCell className="tabular-nums">{formatPlainDate(row.receipt_date)}</TableCell>
-                <TableCell className="max-w-64 truncate">{row.supplier?.name ?? "—"}</TableCell>
+                <TableCell className="max-w-64 truncate" title={row.supplier?.name ?? "—"}>
+                  {row.supplier?.name ?? "—"}
+                </TableCell>
                 <TableCell className="hidden lg:table-cell">{row.invoice_number ?? "—"}</TableCell>
                 <TableCell className="text-right tabular-nums">{row.lineCount}</TableCell>
                 <TableCell
