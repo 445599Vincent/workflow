@@ -8,7 +8,7 @@ import { createClient } from "@/lib/supabase/server";
 import { OPEN_WORK_ORDER_STATUSES } from "./labels";
 import { WORK_ORDERS_PAGE_SIZE, type WorkOrderListParams } from "./schemas";
 
-export async function listWorkOrders(params: WorkOrderListParams) {
+export async function listWorkOrders(params: WorkOrderListParams, currentUserId: string) {
   const supabase = await createClient();
   const from = (params.page - 1) * WORK_ORDERS_PAGE_SIZE;
 
@@ -22,6 +22,7 @@ export async function listWorkOrders(params: WorkOrderListParams) {
   const term = sanitizeSearch(params.q);
   if (term) query = query.or(`number.ilike.%${term}%,title.ilike.%${term}%`);
   if (params.customer) query = query.eq("customer_id", params.customer);
+  if (params.responsible === "mine") query = query.eq("responsible_id", currentUserId);
 
   switch (params.status) {
     case "open":
@@ -152,3 +153,37 @@ export async function getVarianceAlertPct() {
   const value = Number(data?.value);
   return Number.isFinite(value) && value > 0 ? value : 10;
 }
+
+/** Consumption and waste records of the order, newest first (voided ones included). */
+export async function getWorkOrderUsage(workOrderId: string) {
+  const supabase = await createClient();
+  const [consumptions, waste] = await Promise.all([
+    supabase
+      .from("material_consumptions")
+      .select(
+        `id, quantity, total_cost, notes, created_at, voided_at, void_reason,
+         material:materials(sku, name, unit:units(symbol, decimals)),
+         author:profiles!material_consumptions_created_by_fkey(full_name),
+         voider:profiles!material_consumptions_voided_by_fkey(full_name)`,
+      )
+      .eq("work_order_id", workOrderId),
+    supabase
+      .from("waste_records")
+      .select(
+        `id, quantity, total_cost, notes, reason, created_at, voided_at, void_reason,
+         material:materials(sku, name, unit:units(symbol, decimals)),
+         author:profiles!waste_records_created_by_fkey(full_name),
+         voider:profiles!waste_records_voided_by_fkey(full_name)`,
+      )
+      .eq("work_order_id", workOrderId),
+  ]);
+  if (consumptions.error)
+    throw new Error(`No se pudieron cargar los consumos: ${consumptions.error.message}`);
+  if (waste.error) throw new Error(`No se pudieron cargar las mermas: ${waste.error.message}`);
+
+  return [
+    ...consumptions.data.map((row) => ({ ...row, kind: "consumption" as const, reason: null })),
+    ...waste.data.map((row) => ({ ...row, kind: "waste" as const })),
+  ].sort((a, b) => b.created_at.localeCompare(a.created_at));
+}
+export type WorkOrderUsage = Awaited<ReturnType<typeof getWorkOrderUsage>>[number];

@@ -9,6 +9,7 @@ import {
   ScissorsIcon,
   Trash2Icon,
   TriangleAlertIcon,
+  Undo2Icon,
   type LucideIcon,
 } from "lucide-react";
 
@@ -82,6 +83,16 @@ function describe(event: WorkOrderEvent, units: TimelineUnits): { icon: LucideIc
         text: `Merma de ${qty(p.quantity)} de ${material}${
           p.reason ? ` · ${WASTE_REASONS[p.reason]}` : ""
         } (${formatMoney(p.total_cost)})`,
+      };
+    case "consumption_voided":
+      return {
+        icon: Undo2Icon,
+        text: `Anuló un consumo de ${qty(p.quantity)} de ${material} (${formatMoney(p.total_cost)} vuelven al inventario)`,
+      };
+    case "waste_voided":
+      return {
+        icon: Undo2Icon,
+        text: `Anuló una merma de ${qty(p.quantity)} de ${material} (${formatMoney(p.total_cost)} vuelven al inventario)`,
       };
     default:
       return { icon: CirclePlusIcon, text: event.event_type };

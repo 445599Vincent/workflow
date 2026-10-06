@@ -19,8 +19,12 @@ export const metadata: Metadata = { title: "Órdenes de trabajo" };
 export default async function WorkOrdersPage({ searchParams }: PageProps<"/work-orders">) {
   const user = await requireUser();
   const params = parseWorkOrderListParams(await searchParams);
-  const [result, customers] = await Promise.all([listWorkOrders(params), listCustomerOptions()]);
-  const isFiltered = params.q !== "" || params.status !== "open" || Boolean(params.customer);
+  const [result, customers] = await Promise.all([
+    listWorkOrders(params, user.id),
+    listCustomerOptions(),
+  ]);
+  const isFiltered =
+    params.q !== "" || params.status !== "open" || Boolean(params.customer || params.responsible);
 
   const newButton = can(user, "work_orders.manage") && (
     <Button asChild>

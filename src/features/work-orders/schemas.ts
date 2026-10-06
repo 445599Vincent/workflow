@@ -96,6 +96,16 @@ export const cancelSchema = z.object({
 });
 export type CancelValues = z.input<typeof cancelSchema>;
 
+/** Voiding a consumption or a waste record (CON-05, MER-07). */
+export const voidUsageSchema = z.object({
+  reason: z
+    .string()
+    .trim()
+    .min(5, "Explique el motivo (mínimo 5 caracteres).")
+    .max(300, "Máximo 300 caracteres."),
+});
+export type VoidUsageValues = z.input<typeof voidUsageSchema>;
+
 // -----------------------------------------------------------------------------
 // List filters
 // -----------------------------------------------------------------------------
@@ -117,6 +127,8 @@ const workOrderListParamsSchema = z.object({
   q: z.string().trim().max(80).catch(""),
   status: z.enum(WORK_ORDER_LIST_STATUSES).catch("open"),
   customer: z.uuid().optional().catch(undefined),
+  /** "mine": orders whose responsible is the current user. */
+  responsible: z.enum(["mine"]).optional().catch(undefined),
   page: z.coerce.number().int().min(1).catch(1),
 });
 export type WorkOrderListParams = z.infer<typeof workOrderListParamsSchema>;
@@ -128,6 +140,7 @@ export function parseWorkOrderListParams(
     q: firstParam(searchParams.q) ?? "",
     status: firstParam(searchParams.status),
     customer: firstParam(searchParams.customer),
+    responsible: firstParam(searchParams.responsible),
     page: firstParam(searchParams.page),
   });
 }

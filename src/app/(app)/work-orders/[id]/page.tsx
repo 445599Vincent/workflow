@@ -9,7 +9,7 @@ import { PageHeader } from "@/components/shared/page-header";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { listMaterialOptions } from "@/features/materials/queries";
 import { AddMaterialDialog } from "@/features/work-orders/components/add-material-dialog";
 import { CostFacts, costLevelMessage } from "@/features/work-orders/components/cost-summary";
@@ -25,6 +25,7 @@ import {
 } from "@/features/work-orders/components/status-badges";
 import { WorkOrderLines } from "@/features/work-orders/components/work-order-lines";
 import { UsageQuickActions } from "@/features/work-orders/components/usage-quick-actions";
+import { UsageRecords } from "@/features/work-orders/components/usage-records";
 import { WorkOrderTimeline } from "@/features/work-orders/components/work-order-timeline";
 import { summarizeCosts } from "@/features/work-orders/costs";
 import {
@@ -40,6 +41,7 @@ import {
   getWorkOrder,
   getWorkOrderEvents,
   getWorkOrderLines,
+  getWorkOrderUsage,
   getWorkOrderWasteCost,
 } from "@/features/work-orders/queries";
 import { can, requireUser } from "@/lib/auth/session";
@@ -59,10 +61,11 @@ export default async function WorkOrderPage({ params }: PageProps<"/work-orders/
   if (!z.uuid().safeParse(id).success) notFound();
 
   const user = await requireUser();
-  const [order, lines, events, wasteCost, alertPct] = await Promise.all([
+  const [order, lines, events, usage, wasteCost, alertPct] = await Promise.all([
     getWorkOrder(id),
     getWorkOrderLines(id),
     getWorkOrderEvents(id),
+    getWorkOrderUsage(id),
     getWorkOrderWasteCost(id),
     getVarianceAlertPct(),
   ]);
@@ -277,6 +280,25 @@ export default async function WorkOrderPage({ params }: PageProps<"/work-orders/
               )}
             </CardContent>
           </Card>
+
+          {usage.length > 0 && (
+            <Card className="gap-0 pb-0">
+              <CardHeader className="pb-4">
+                <CardTitle>Consumos y mermas</CardTitle>
+                {closed && can(user, "inventory.void") && (
+                  <CardDescription>
+                    Para anular un registro, primero reabra la orden.
+                  </CardDescription>
+                )}
+              </CardHeader>
+              <CardContent className="border-t px-0">
+                <UsageRecords
+                  records={usage}
+                  canVoid={acceptsConsumption(order.status) && can(user, "inventory.void")}
+                />
+              </CardContent>
+            </Card>
+          )}
 
           <Card>
             <CardHeader>

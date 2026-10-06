@@ -12,6 +12,7 @@ import {
   plannedQuantitySchema,
   releaseSchema,
   statusChangeSchema,
+  voidUsageSchema,
   wasteSchema,
   workOrderFormSchema,
   type CancelValues,
@@ -20,6 +21,7 @@ import {
   type PlannedQuantityValues,
   type ReleaseValues,
   type StatusChangeValues,
+  type VoidUsageValues,
   type WasteValues,
   type WorkOrderFormValues,
 } from "./schemas";
@@ -31,6 +33,7 @@ function revalidateOrder(workOrderId: string) {
   revalidatePath("/materials", "layout");
   revalidatePath("/movements");
   revalidatePath("/dashboard");
+  revalidatePath("/movements/waste");
 }
 
 async function lineOrderId(lineId: string): Promise<string | null> {
@@ -277,5 +280,37 @@ export async function registerWaste(
   if (error) return fromDatabaseError(error);
 
   revalidateOrder(workOrderId);
+  return ok(undefined);
+}
+
+/**
+ * Voids a consumption or a waste record (CON-05, MER-07): the stock comes back
+ * at the record's cost. Also used for warehouse waste (no order).
+ */
+export async function voidUsage(
+  kind: "consumption" | "waste",
+  recordId: string,
+  values: VoidUsageValues,
+): Promise<ActionResult> {
+  const parsed = voidUsageSchema.safeParse(values);
+  if (!parsed.success) return validationFailed(parsed.error);
+
+  const supabase = await createClient();
+  const { data, error } =
+    kind === "consumption"
+      ? await supabase.rpc("void_consumption", {
+          p_consumption_id: recordId,
+          p_reason: parsed.data.reason,
+        })
+      : await supabase.rpc("void_waste", { p_waste_id: recordId, p_reason: parsed.data.reason });
+  if (error) return fromDatabaseError(error);
+
+  if (data.work_order_id) {
+    revalidateOrder(data.work_order_id);
+  } else {
+    revalidatePath("/movements", "layout");
+    revalidatePath("/materials", "layout");
+    revalidatePath("/dashboard");
+  }
   return ok(undefined);
 }
