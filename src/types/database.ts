@@ -2312,6 +2312,17 @@ export type Database = {
         };
       };
       refresh_work_order_actual_cost: { Args: { p_work_order_id: string }; Returns: undefined };
+      report_monthly_trend: {
+        Args: { p_months?: number };
+        Returns: {
+          actual_cost: number;
+          completed_orders: number;
+          consumed_cost: number;
+          estimated_cost: number;
+          month: string;
+          waste_cost: number;
+        }[];
+      };
       report_orders_cost: {
         Args: { p_from?: string; p_to?: string };
         Returns: {
