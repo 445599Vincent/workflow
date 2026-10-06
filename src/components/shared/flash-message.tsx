@@ -15,6 +15,8 @@ const NOTICES: Record<string, string> = {
   "receipt-voided": "Entrada anulada. El inventario se revirtió.",
   "adjustment-created": "Ajuste registrado. Puede verlo en el kardex.",
   "catalog-saved": "Cambios guardados.",
+  "work-order-created": "Orden creada. Agregue los materiales planificados.",
+  "work-order-updated": "Cambios guardados.",
 };
 
 export function FlashMessage() {
