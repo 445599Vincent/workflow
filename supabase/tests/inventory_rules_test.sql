@@ -274,6 +274,25 @@ select pg_temp.expect(
   'current_user_permissions returns the role permissions');
 
 
+-- 5a. Forced password change (D-023) --------------------------------------------
+select pg_temp.act_as('00000000-0000-0000-0000-00000000000d'); -- viewer
+
+select pg_temp.expect_error(
+  $$update public.profiles set must_change_password = true where id = '00000000-0000-0000-0000-00000000000d'$$,
+  '%Solo un administrador puede exigir%');
+
+select pg_temp.act_as('00000000-0000-0000-0000-00000000000a'); -- admin
+update public.profiles set must_change_password = true where id = '00000000-0000-0000-0000-00000000000d';
+
+select pg_temp.act_as('00000000-0000-0000-0000-00000000000d'); -- viewer clears own flag
+update public.profiles set must_change_password = false where id = '00000000-0000-0000-0000-00000000000d';
+
+select pg_temp.expect(
+  (select not must_change_password from public.profiles where id = '00000000-0000-0000-0000-00000000000d'),
+  'admins require a password change; users clear their own flag');
+
+select pg_temp.act_as('00000000-0000-0000-0000-00000000000a'); -- back to admin
+
 -- 5b. Voiding receipts (BR ENT-05) -------------------------------------------
 -- Still acting as admin. Vinil: 139.5 @ 320 before this block.
 insert into t_ids
