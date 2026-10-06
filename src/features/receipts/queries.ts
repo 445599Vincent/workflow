@@ -2,6 +2,7 @@ import "server-only";
 
 import { cache } from "react";
 
+import { listMaterialOptions } from "@/features/materials/queries";
 import { sanitizeSearch } from "@/lib/search";
 import { createClient } from "@/lib/supabase/server";
 import { RECEIPTS_PAGE_SIZE, type ReceiptListParams } from "./schemas";
@@ -79,33 +80,13 @@ export type ReceiptLine = Awaited<ReturnType<typeof getReceiptLines>>[number];
 export async function getReceiptFormOptions() {
   const supabase = await createClient();
   const [materials, suppliers] = await Promise.all([
-    supabase
-      .from("materials_overview")
-      .select("id, sku, name, unit_symbol, unit_name, unit_decimals, last_cost, stock_on_hand")
-      .eq("is_active", true)
-      .order("name"),
+    listMaterialOptions(),
     supabase.from("suppliers").select("id, name").eq("is_active", true).order("name"),
   ]);
-  if (materials.error)
-    throw new Error(`No se pudieron cargar los materiales: ${materials.error.message}`);
-  if (suppliers.error)
+  if (suppliers.error) {
     throw new Error(`No se pudieron cargar los proveedores: ${suppliers.error.message}`);
-
-  return {
-    // View columns are nullable in the generated types; these never are.
-    materials: materials.data.map((row) => ({
-      id: row.id!,
-      sku: row.sku!,
-      name: row.name!,
-      unitSymbol: row.unit_symbol ?? "",
-      unitName: row.unit_name ?? "",
-      unitDecimals: row.unit_decimals ?? 4,
-      lastCost: row.last_cost ?? 0,
-      stockOnHand: row.stock_on_hand ?? 0,
-    })),
-    suppliers: suppliers.data,
-  };
+  }
+  return { materials, suppliers: suppliers.data };
 }
 
 export type ReceiptFormOptions = Awaited<ReturnType<typeof getReceiptFormOptions>>;
-export type MaterialOption = ReceiptFormOptions["materials"][number];

@@ -13,6 +13,8 @@ const NOTICES: Record<string, string> = {
   "supplier-updated": "Cambios guardados.",
   "receipt-posted": "Entrada registrada. El inventario se actualizó.",
   "receipt-voided": "Entrada anulada. El inventario se revirtió.",
+  "adjustment-created": "Ajuste registrado. Puede verlo en el kardex.",
+  "catalog-saved": "Cambios guardados.",
 };
 
 export function FlashMessage() {
