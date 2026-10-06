@@ -17,15 +17,19 @@ export function SidebarNav({ permissions, onNavigate }: SidebarNavProps) {
 
   return (
     <nav aria-label="Navegación principal" className="flex flex-col gap-6">
-      {NAV_GROUPS.map((group) => {
+      {NAV_GROUPS.map((group, groupIndex) => {
         const items = group.items.filter(
           (item) => !item.permission || permissions.includes(item.permission),
         );
         if (items.length === 0) return null;
 
         return (
-          <div key={group.label} className="space-y-1">
-            <p className="px-3 text-[11px] font-medium tracking-wider text-sidebar-foreground/50 uppercase">
+          <div
+            key={group.label}
+            style={{ "--i": groupIndex } as React.CSSProperties}
+            className="animate-enter-stagger space-y-1"
+          >
+            <p className="px-3 text-[11px] font-medium tracking-wider text-sidebar-foreground/65 uppercase">
               {group.label}
             </p>
             <ul className="space-y-0.5">
@@ -38,17 +42,23 @@ export function SidebarNav({ permissions, onNavigate }: SidebarNavProps) {
                       onClick={onNavigate}
                       aria-current={active ? "page" : undefined}
                       className={cn(
-                        "group flex items-center gap-3 rounded-md px-3 py-2 text-sm transition-colors",
+                        "group relative flex items-center gap-3 rounded-md px-3 py-2 text-sm",
+                        "transition-[background-color,color,transform] duration-150 ease-out-strong active:scale-[0.98]",
                         "outline-none focus-visible:ring-2 focus-visible:ring-sidebar-ring",
+                        // Active marker: a teal bar that grows in from the centre.
+                        "before:absolute before:top-1/2 before:left-0 before:h-5 before:w-[3px] before:-translate-y-1/2 before:rounded-r-full before:bg-sidebar-primary",
+                        "before:transition-[opacity,transform] before:duration-200 before:ease-out-strong",
                         active
-                          ? "bg-sidebar-accent font-medium text-sidebar-accent-foreground"
-                          : "text-sidebar-foreground hover:bg-sidebar-accent/60 hover:text-sidebar-accent-foreground",
+                          ? "bg-sidebar-accent font-medium text-sidebar-accent-foreground shadow-[inset_0_0_0_1px_rgb(255_255_255/0.06)] before:scale-y-100 before:opacity-100"
+                          : "text-sidebar-foreground before:scale-y-30 before:opacity-0 hover:bg-sidebar-accent/60 hover:text-sidebar-accent-foreground",
                       )}
                     >
                       <Icon
                         className={cn(
-                          "size-4 shrink-0",
-                          active ? "text-sidebar-primary" : "text-sidebar-foreground/70",
+                          "size-4 shrink-0 transition-colors duration-150",
+                          active
+                            ? "text-sidebar-primary"
+                            : "text-sidebar-foreground/70 group-hover:text-sidebar-foreground",
                         )}
                       />
                       <span className="flex-1 truncate">{label}</span>
