@@ -12,6 +12,8 @@ export type CurrentUser = {
   fullName: string;
   roleCode: string;
   permissions: ReadonlySet<Permission>;
+  /** Temporary password set by an administrator (D-023). */
+  mustChangePassword: boolean;
 };
 
 /**
@@ -27,7 +29,7 @@ export const getCurrentUser = cache(async (): Promise<CurrentUser | null> => {
   const [{ data: profile }, { data: permissions }] = await Promise.all([
     supabase
       .from("profiles")
-      .select("id, email, full_name, role_code, is_active")
+      .select("id, email, full_name, role_code, is_active, must_change_password")
       .eq("id", userId)
       .maybeSingle(),
     supabase.rpc("current_user_permissions"),
@@ -42,15 +44,18 @@ export const getCurrentUser = cache(async (): Promise<CurrentUser | null> => {
     fullName: profile.full_name || profile.email,
     roleCode: profile.role_code,
     permissions: new Set((permissions ?? []).filter(isPermission)),
+    mustChangePassword: profile.must_change_password,
   };
 });
 
 /**
  * For authenticated pages. A valid auth session whose profile is missing or
- * inactive is signed out through /auth/inactive.
+ * inactive is signed out through /auth/inactive; a user with a temporary
+ * password is sent to choose a new one first.
  */
 export async function requireUser(): Promise<CurrentUser> {
   const user = await getCurrentUser();
+  if (user?.mustChangePassword) redirect("/reset-password?required=1");
   if (user) return user;
 
   const supabase = await createClient();

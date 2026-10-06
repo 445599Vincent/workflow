@@ -29,6 +29,9 @@ export async function signIn(input: SignInInput): Promise<ActionResult> {
     if (error.code === "invalid_credentials") {
       return fail("Correo o contraseña incorrectos.");
     }
+    if (error.code === "user_banned") {
+      return fail("Su usuario está desactivado. Contacte a un administrador.");
+    }
     if (error.code === "email_not_confirmed") {
       return fail("Debe confirmar su correo antes de iniciar sesión.");
     }
@@ -90,6 +93,13 @@ export async function updatePassword(input: NewPasswordInput): Promise<ActionRes
     console.error("[auth] update password", error.code, error.message);
     return fail(GENERIC_ERROR);
   }
+
+  // Clear the "temporary password" flag (D-023); RLS lets users update their own profile.
+  await supabase
+    .from("profiles")
+    .update({ must_change_password: false })
+    .eq("id", data.claims.sub)
+    .eq("must_change_password", true);
 
   redirect("/dashboard?notice=password-updated");
 }

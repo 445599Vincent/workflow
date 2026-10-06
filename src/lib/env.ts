@@ -27,3 +27,11 @@ export function getSupabaseConfig() {
 export function getSiteUrl() {
   return (process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000").replace(/\/$/, "");
 }
+
+/**
+ * SERVER ONLY. Optional key that lets administrators create accounts and set
+ * passwords in Supabase Auth (D-022). Never prefix it with NEXT_PUBLIC_.
+ */
+export function getServiceRoleKey(): string | null {
+  return process.env.SUPABASE_SERVICE_ROLE_KEY || null;
+}
