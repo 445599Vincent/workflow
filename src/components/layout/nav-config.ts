@@ -1,6 +1,7 @@
 import {
   ArrowLeftRightIcon,
   BarChart3Icon,
+  BellIcon,
   BoxesIcon,
   BuildingIcon,
   ClipboardListIcon,
@@ -8,6 +9,7 @@ import {
   PackageIcon,
   PackagePlusIcon,
   SettingsIcon,
+  ShieldCheckIcon,
   TruckIcon,
   UsersIcon,
   type LucideIcon,
@@ -41,7 +43,7 @@ export const NAV_GROUPS: NavGroup[] = [
         icon: ClipboardListIcon,
       },
       { href: "/customers", label: "Clientes", icon: BuildingIcon },
-      { href: "/inventory", label: "Inventario", icon: BoxesIcon, comingSoon: true },
+      { href: "/inventory", label: "Inventario", icon: BoxesIcon },
       { href: "/materials", label: "Materias primas", icon: PackageIcon },
       { href: "/movements", label: "Movimientos", icon: ArrowLeftRightIcon },
       { href: "/receipts", label: "Compras / Entradas", icon: PackagePlusIcon },
@@ -50,7 +52,10 @@ export const NAV_GROUPS: NavGroup[] = [
   },
   {
     label: "Análisis",
-    items: [{ href: "/reports", label: "Reportes", icon: BarChart3Icon }],
+    items: [
+      { href: "/alerts", label: "Alertas", icon: BellIcon },
+      { href: "/reports", label: "Reportes", icon: BarChart3Icon },
+    ],
   },
   {
     label: "Administración",
@@ -60,6 +65,12 @@ export const NAV_GROUPS: NavGroup[] = [
         label: "Usuarios",
         icon: UsersIcon,
         permission: "users.manage",
+      },
+      {
+        href: "/audit",
+        label: "Auditoría",
+        icon: ShieldCheckIcon,
+        permission: "audit.view",
       },
       { href: "/settings", label: "Configuración", icon: SettingsIcon },
     ],
