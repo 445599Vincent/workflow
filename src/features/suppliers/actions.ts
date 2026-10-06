@@ -6,21 +6,8 @@ import type { PostgrestError } from "@supabase/supabase-js";
 
 import { fail, fromDatabaseError, validationFailed, type ActionResult } from "@/lib/actions";
 import { createClient } from "@/lib/supabase/server";
-import { supplierFormSchema, type SupplierFormValues, type SupplierInput } from "./schemas";
-
-function toRow(input: SupplierInput) {
-  return {
-    code: input.code,
-    name: input.name,
-    tax_id: input.taxId,
-    contact_name: input.contactName,
-    phone: input.phone,
-    email: input.email,
-    address: input.address,
-    notes: input.notes,
-    is_active: input.isActive,
-  };
-}
+import { partyToRow } from "@/lib/party-schema";
+import { supplierFormSchema, type SupplierFormValues } from "./schemas";
 
 /** A duplicate code is reported on the field itself. */
 function toActionError(error: PostgrestError) {
@@ -39,7 +26,7 @@ export async function createSupplier(values: SupplierFormValues): Promise<Action
   const supabase = await createClient();
   const { data, error } = await supabase
     .from("suppliers")
-    .insert(toRow(parsed.data))
+    .insert(partyToRow(parsed.data))
     .select("id")
     .single();
   if (error) return toActionError(error);
@@ -58,7 +45,7 @@ export async function updateSupplier(
   const supabase = await createClient();
   const { data, error } = await supabase
     .from("suppliers")
-    .update(toRow(parsed.data))
+    .update(partyToRow(parsed.data))
     .eq("id", id)
     .select("id")
     .maybeSingle();
