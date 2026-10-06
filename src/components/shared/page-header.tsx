@@ -11,7 +11,10 @@ type PageHeaderProps = {
 export function PageHeader({ title, description, actions, eyebrow, className }: PageHeaderProps) {
   return (
     <div
-      className={cn("flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between", className)}
+      className={cn(
+        "flex animate-enter flex-col gap-4 sm:flex-row sm:items-end sm:justify-between",
+        className,
+      )}
     >
       <div className="min-w-0 space-y-1">
         {eyebrow && <div className="text-sm text-muted-foreground">{eyebrow}</div>}

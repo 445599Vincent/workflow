@@ -19,14 +19,16 @@ export function KpiGrid({ summary }: { summary: DashboardSummary }) {
   const variance = estimated > 0 ? (actual - estimated) / estimated : null;
 
   return (
-    <div className="grid grid-cols-2 gap-3 sm:gap-4 xl:grid-cols-4">
+    <div className="grid grid-cols-2 gap-3 sm:gap-4 xl:grid-cols-4 [&>*]:animate-enter-stagger">
       <StatCard
+        index={0}
         label="Órdenes activas"
         value={summary.active_work_orders}
         icon={ClipboardListIcon}
         hint="Pendientes, planificadas o en ejecución"
       />
       <StatCard
+        index={1}
         label="Órdenes atrasadas"
         value={summary.overdue_work_orders}
         icon={AlarmClockIcon}
@@ -34,6 +36,7 @@ export function KpiGrid({ summary }: { summary: DashboardSummary }) {
         hint="Fecha requerida vencida"
       />
       <StatCard
+        index={2}
         label="Valor de inventario"
         value={formatMoney(summary.inventory_value)}
         icon={WalletIcon}
@@ -41,6 +44,7 @@ export function KpiGrid({ summary }: { summary: DashboardSummary }) {
         href="/inventory"
       />
       <StatCard
+        index={3}
         label="Materiales bajo mínimo"
         value={summary.low_stock_materials}
         icon={PackageXIcon}
@@ -49,12 +53,14 @@ export function KpiGrid({ summary }: { summary: DashboardSummary }) {
         href="/materials?status=low"
       />
       <StatCard
+        index={4}
         label="Consumo del mes"
         value={formatMoney(summary.consumption_cost_month)}
         icon={WrenchIcon}
         hint="Material útil usado en órdenes"
       />
       <StatCard
+        index={5}
         label="Merma del mes"
         value={formatMoney(summary.waste_cost_month)}
         icon={TrendingDownIcon}
@@ -62,6 +68,7 @@ export function KpiGrid({ summary }: { summary: DashboardSummary }) {
         hint="Desperdicio registrado"
       />
       <StatCard
+        index={6}
         label="Órdenes terminadas"
         value={summary.completed_this_month}
         icon={CircleCheckBigIcon}
@@ -69,6 +76,7 @@ export function KpiGrid({ summary }: { summary: DashboardSummary }) {
         hint="Cerradas este mes"
       />
       <StatCard
+        index={7}
         label="Estimado vs real"
         value={variance === null ? "—" : `${variance > 0 ? "+" : ""}${formatPercent(variance)}`}
         icon={ScaleIcon}

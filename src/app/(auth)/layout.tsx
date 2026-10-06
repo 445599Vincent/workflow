@@ -26,8 +26,12 @@ export default function AuthLayout({ children }: LayoutProps<"/">) {
             Control de materia prima y órdenes de trabajo.
           </h2>
           <ul className="space-y-4">
-            {HIGHLIGHTS.map(({ icon: Icon, text }) => (
-              <li key={text} className="flex items-center gap-3">
+            {HIGHLIGHTS.map(({ icon: Icon, text }, index) => (
+              <li
+                key={text}
+                style={{ "--i": index + 2 } as React.CSSProperties}
+                className="flex animate-enter-stagger items-center gap-3"
+              >
                 <span className="flex size-9 items-center justify-center rounded-lg bg-white/5 text-sidebar-primary ring-1 ring-white/10">
                   <Icon className="size-4" />
                 </span>
@@ -43,7 +47,7 @@ export default function AuthLayout({ children }: LayoutProps<"/">) {
 
       <main className="flex flex-col items-center justify-center px-4 py-10 sm:px-8">
         <Logo className="mb-10 lg:hidden" />
-        <div className="w-full max-w-sm">{children}</div>
+        <div className="w-full max-w-sm animate-enter">{children}</div>
       </main>
     </div>
   );

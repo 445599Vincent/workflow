@@ -20,6 +20,8 @@ type StatCardProps = {
   hint?: React.ReactNode;
   tone?: Tone;
   href?: string;
+  /** Position in a grid; drives the staggered entrance delay. */
+  index?: number;
 };
 
 export function StatCard({
@@ -29,12 +31,14 @@ export function StatCard({
   hint,
   tone = "default",
   href,
+  index = 0,
 }: StatCardProps) {
   const content = (
     <Card
       className={cn(
         "h-full gap-3 py-4",
-        href && "transition-colors hover:border-primary/40 hover:shadow-sm",
+        href &&
+          "transition-[border-color,box-shadow,transform] duration-200 ease-out-strong hover:-translate-y-0.5 hover:border-primary/40 hover:shadow-md active:translate-y-0 active:scale-[0.99]",
       )}
     >
       <div className="flex items-start justify-between gap-2 px-3 sm:gap-3 sm:px-4">
@@ -57,14 +61,17 @@ export function StatCard({
     </Card>
   );
 
+  const style = { "--i": index } as React.CSSProperties;
+
   return href ? (
     <Link
       href={href}
+      style={style}
       className="rounded-xl outline-none focus-visible:ring-[3px] focus-visible:ring-ring/40"
     >
       {content}
     </Link>
   ) : (
-    content
+    <div style={style}>{content}</div>
   );
 }

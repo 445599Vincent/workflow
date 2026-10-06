@@ -130,6 +130,27 @@
   --radius-md: calc(var(--radius) - 2px);
   --radius-lg: var(--radius);
   --radius-xl: calc(var(--radius) + 4px);
+
+  /* Strong ease-out: responsive start, soft landing. Built-in easings feel sluggish. */
+  --ease-out-strong: cubic-bezier(0.23, 1, 0.32, 1);
+
+  /* Shadows tinted with the brand navy instead of pure black. */
+  --shadow-xs: 0 1px 2px 0 rgb(11 37 69 / 0.06);
+  --shadow-sm: 0 1px 3px 0 rgb(11 37 69 / 0.08), 0 1px 2px -1px rgb(11 37 69 / 0.06);
+  --shadow-md: 0 6px 16px -4px rgb(11 37 69 / 0.12), 0 2px 6px -2px rgb(11 37 69 / 0.06);
+
+  --animate-enter: enter 0.4s cubic-bezier(0.23, 1, 0.32, 1) backwards;
+}
+
+@keyframes enter {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
 @layer base {
@@ -138,9 +159,42 @@
   }
   html {
     -webkit-text-size-adjust: 100%;
+    -webkit-tap-highlight-color: transparent;
+    scroll-padding-top: 5rem;
+  }
+  h1,
+  h2,
+  h3 {
+    text-wrap: balance;
+  }
+  p {
+    text-wrap: pretty;
+  }
+  table {
+    font-variant-numeric: tabular-nums;
   }
   body {
     @apply bg-background font-sans text-foreground antialiased;
     font-feature-settings: "cv11", "ss01";
+  }
+}
+
+/*
+ * Staggered entrance: set --i on each child (0, 1, 2…) to cascade them in.
+ * Keep delays short (40ms steps) so it reads as one gesture, not a slideshow.
+ */
+@utility animate-enter-stagger {
+  animation: enter 0.4s cubic-bezier(0.23, 1, 0.32, 1) backwards;
+  animation-delay: calc(var(--i, 0) * 40ms);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  ::before,
+  ::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
   }
 }
