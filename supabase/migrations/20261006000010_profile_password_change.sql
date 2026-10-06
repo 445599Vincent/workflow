@@ -8,7 +8,7 @@
 -- =============================================================================
 
 alter table public.profiles
-  add column must_change_password boolean not null default false;
+  add column if not exists must_change_password boolean not null default false;
 
 comment on column public.profiles.must_change_password is
   'True after an administrator sets a temporary password; cleared when the user chooses a new one.';
