@@ -143,12 +143,25 @@ COMPRA / ENTRADA → EXISTENCIA → RESERVA → ORDEN DE TRABAJO → CONSUMO REA
 | ID | Condición |
 |----|-----------|
 | ALR-01 | Stock disponible ≤ stock mínimo (material activo). Disponible ≤ 0 se muestra como "Sin existencia". |
-| ALR-02 | Una OT excede el material estimado (CON-04). |
+| ALR-02 | Una OT excede el material estimado (CON-04): OT En producción / En instalación, o terminada en los últimos 30 días, con estimado > 0 y variación % > `consumption_variance_alert_pct`. |
 | ALR-03 | OT atrasada (OT-05). |
-| ALR-04 | Merma considerable (MER-06). |
+| ALR-04 | Merma considerable (MER-06): en una OT abierta o terminada en los últimos 30 días, la merma de un material supera `waste_alert_pct` de lo usado (consumo + merma) de ese material en la OT. |
 
-En v1 las alertas se **calculan** al consultar (vistas/funciones). No se guardan
-notificaciones hasta definir canales (correo, push).
+En v1 las alertas se **calculan** al consultar (función `get_alerts`). No se guardan
+notificaciones hasta definir canales (correo, push). Todos los usuarios ven las
+alertas.
+
+## 8.1 Reportes (REP)
+
+| ID | Regla |
+|----|-------|
+| REP-01 | Consumo y merma se toman de los registros **no anulados** (D-030). Un consumo anulado no cuenta en ningún reporte ni en el dashboard. |
+| REP-02 | Los períodos son fechas del negocio (zona `America/Santo_Domingo`), con inicio y fin incluidos. Por defecto: el mes en curso. |
+| REP-03 | Consumo por material: cantidad y costo de consumo útil, cantidad y costo de merma, total y % de merma sobre lo usado, en el período. |
+| REP-04 | Costo por orden (estimado vs real): órdenes **terminadas** en el período, con costo estimado, real, merma, variación RD$ y %. |
+| REP-05 | Consumo por cliente: costo de consumo y merma del período agrupado por el cliente de la OT; las OT sin cliente aparecen como "Sin cliente". |
+| REP-06 | Inventario actual: existencia física, reservada, disponible, costo promedio y valor (físico × promedio) por material, con totales por categoría. No depende del período. |
+| REP-07 | Todo reporte se puede exportar a CSV (D-031) con los mismos filtros que se ven en pantalla. |
 
 ## 9. Permisos
 
