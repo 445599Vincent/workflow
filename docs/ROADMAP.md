@@ -57,7 +57,7 @@ antes de continuar. Leyenda: ✅ hecho · 🟡 parcial · ⬜ pendiente.
 - ✅ Merma de almacén sin orden, solo del disponible
 - ✅ Filtro "Asignadas a mí" en órdenes
 
-## Fase 4 — Analítica 🟡
+## Fase 4 — Analítica ✅
 
 - ✅ Migración 013: vista `usage_records` (sin anulados), reportes, `get_alerts`; el dashboard ya no cuenta lo anulado (D-030)
 - ✅ Centro de alertas (ALR-01…04) y resumen de alertas en el dashboard
@@ -65,8 +65,8 @@ antes de continuar. Leyenda: ✅ hecho · 🟡 parcial · ⬜ pendiente.
 - ✅ Exportación a Excel (CSV con los mismos filtros, D-031)
 - ✅ Inventario: valor por categoría, bajo mínimo y sin existencia
 - ✅ Visor de auditoría (`audit.view`)
-- ⬜ Gráficos en el dashboard (tendencia de consumo y merma por mes)
-- ⬜ Exportación CSV del listado de movimientos y de mermas
+- ✅ Migración 014 y gráficos en el dashboard: consumo y merma por mes, estimado vs real de órdenes terminadas (D-032)
+- ✅ Exportación CSV de los listados de Movimientos y Mermas
 
 ## Fase 5 — Funcionalidades avanzadas ⬜
 
@@ -79,10 +79,10 @@ antes de continuar. Leyenda: ✅ hecho · 🟡 parcial · ⬜ pendiente.
 
 ## Siguiente paso recomendado
 
-1. Aplicar las migraciones 011, 012 y 013 en Supabase de producción (README → Actualizar una base ya instalada).
+1. Aplicar las migraciones 011 a 014 en Supabase de producción (README → Actualizar una base ya instalada).
 2. Validar con producción el flujo completo de una orden real: planificar, reservar, consumir,
    registrar merma y terminar; revisar el costo real contra lo esperado.
-3. Completar la Fase 4 (gráficos) y definir con el negocio las prioridades de la Fase 5.
+3. Definir con el negocio las prioridades de la Fase 5 (retazos, QR, adjuntos, importación desde Excel, ADM Cloud).
 
 ## Pendientes de decisión con el negocio
 
