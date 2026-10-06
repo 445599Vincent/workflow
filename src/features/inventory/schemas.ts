@@ -67,3 +67,34 @@ export function parseMovementListParams(
     page: firstParam(searchParams.page),
   });
 }
+
+// -----------------------------------------------------------------------------
+// Waste list (order and warehouse waste, MER)
+// -----------------------------------------------------------------------------
+export const WASTE_PAGE_SIZE = 30;
+
+export const WASTE_SCOPES = {
+  all: "Todas las mermas",
+  orders: "De órdenes de trabajo",
+  warehouse: "De almacén",
+} as const;
+export type WasteScope = keyof typeof WASTE_SCOPES;
+
+const wasteListParamsSchema = z.object({
+  scope: z.enum(Object.keys(WASTE_SCOPES) as [WasteScope, ...WasteScope[]]).catch("all"),
+  from: optionalDate,
+  to: optionalDate,
+  page: z.coerce.number().int().min(1).catch(1),
+});
+export type WasteListParams = z.infer<typeof wasteListParamsSchema>;
+
+export function parseWasteListParams(
+  searchParams: Record<string, string | string[] | undefined>,
+): WasteListParams {
+  return wasteListParamsSchema.parse({
+    scope: firstParam(searchParams.scope),
+    from: firstParam(searchParams.from),
+    to: firstParam(searchParams.to),
+    page: firstParam(searchParams.page),
+  });
+}

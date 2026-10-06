@@ -2,7 +2,12 @@ import "server-only";
 
 import { sanitizeSearch } from "@/lib/search";
 import { createClient } from "@/lib/supabase/server";
-import { MOVEMENTS_PAGE_SIZE, type MovementListParams } from "./schemas";
+import {
+  MOVEMENTS_PAGE_SIZE,
+  WASTE_PAGE_SIZE,
+  type MovementListParams,
+  type WasteListParams,
+} from "./schemas";
 
 /** Dominican Republic is UTC-4 all year (no daylight saving time). */
 const DR_OFFSET = "-04:00";
@@ -42,3 +47,53 @@ export async function listMovements(params: MovementListParams) {
 }
 
 export type MovementRow = Awaited<ReturnType<typeof listMovements>>["rows"][number];
+
+/** Waste records (orders and warehouse), newest first, plus the active total. */
+export async function listWaste(params: WasteListParams) {
+  const supabase = await createClient();
+  const from = (params.page - 1) * WASTE_PAGE_SIZE;
+
+  let query = supabase.from("waste_records").select(
+    `id, quantity, total_cost, reason, notes, occurred_at, voided_at, void_reason, work_order_id,
+       material:materials(id, sku, name, unit:units(symbol, decimals)),
+       work_order:work_orders(id, number, title),
+       author:profiles!waste_records_created_by_fkey(full_name),
+       voider:profiles!waste_records_voided_by_fkey(full_name)`,
+    { count: "exact" },
+  );
+  // Same filters for the total of active (not voided) waste.
+  let totals = supabase.from("waste_records").select("total_cost").is("voided_at", null);
+
+  if (params.scope === "orders") {
+    query = query.not("work_order_id", "is", null);
+    totals = totals.not("work_order_id", "is", null);
+  } else if (params.scope === "warehouse") {
+    query = query.is("work_order_id", null);
+    totals = totals.is("work_order_id", null);
+  }
+  if (params.from) {
+    query = query.gte("occurred_at", `${params.from}T00:00:00${DR_OFFSET}`);
+    totals = totals.gte("occurred_at", `${params.from}T00:00:00${DR_OFFSET}`);
+  }
+  if (params.to) {
+    query = query.lte("occurred_at", `${params.to}T23:59:59.999${DR_OFFSET}`);
+    totals = totals.lte("occurred_at", `${params.to}T23:59:59.999${DR_OFFSET}`);
+  }
+
+  const [list, sum] = await Promise.all([
+    query.order("occurred_at", { ascending: false }).range(from, from + WASTE_PAGE_SIZE - 1),
+    totals,
+  ]);
+  if (list.error) throw new Error(`No se pudieron cargar las mermas: ${list.error.message}`);
+  if (sum.error) throw new Error(`No se pudo calcular el total de merma: ${sum.error.message}`);
+
+  return {
+    rows: list.data,
+    total: list.count ?? 0,
+    activeCost: sum.data.reduce((acc, row) => acc + row.total_cost, 0),
+    activeCount: sum.data.length,
+    page: params.page,
+    pageCount: Math.max(1, Math.ceil((list.count ?? 0) / WASTE_PAGE_SIZE)),
+  };
+}
+export type WasteRow = Awaited<ReturnType<typeof listWaste>>["rows"][number];

@@ -1,6 +1,12 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { ArrowLeftRightIcon, PackagePlusIcon, ScaleIcon, SearchXIcon } from "lucide-react";
+import {
+  ArrowLeftRightIcon,
+  PackagePlusIcon,
+  ScaleIcon,
+  ScissorsIcon,
+  SearchXIcon,
+} from "lucide-react";
 
 import { EmptyState } from "@/components/shared/empty-state";
 import { PageHeader } from "@/components/shared/page-header";
@@ -28,6 +34,12 @@ export default async function MovementsPage({ searchParams }: PageProps<"/moveme
         description="Todos los cambios de inventario, del más reciente al más antiguo. Ningún movimiento se borra."
         actions={
           <>
+            <Button variant="outline" asChild>
+              <Link href="/movements/waste">
+                <ScissorsIcon />
+                Mermas
+              </Link>
+            </Button>
             {can(user, "inventory.receive") && (
               <Button variant="outline" asChild>
                 <Link href="/receipts/new">
