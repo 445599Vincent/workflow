@@ -1,5 +1,6 @@
 import { z } from "zod";
 
+import { firstParam } from "@/lib/url";
 import { decimalField, optionalText, optionalUuid, requiredDecimalField } from "@/lib/validation";
 
 /**
@@ -91,14 +92,13 @@ export type MaterialListParams = z.infer<typeof materialListParamsSchema>;
 export function parseMaterialListParams(
   searchParams: Record<string, string | string[] | undefined>,
 ): MaterialListParams {
-  const first = (value: string | string[] | undefined) => (Array.isArray(value) ? value[0] : value);
   return materialListParamsSchema.parse({
-    q: first(searchParams.q) ?? "",
-    category: first(searchParams.category),
-    status: first(searchParams.status),
-    sort: first(searchParams.sort),
-    dir: first(searchParams.dir),
-    page: first(searchParams.page),
+    q: firstParam(searchParams.q) ?? "",
+    category: firstParam(searchParams.category),
+    status: firstParam(searchParams.status),
+    sort: firstParam(searchParams.sort),
+    dir: firstParam(searchParams.dir),
+    page: firstParam(searchParams.page),
   });
 }
 

@@ -21,3 +21,8 @@ export function buildHref(
   const query = params.toString();
   return query ? `${pathname}?${query}` : pathname;
 }
+
+/** First value of a Next.js search param (which may be repeated). */
+export function firstParam(value: string | string[] | undefined): string | undefined {
+  return Array.isArray(value) ? value[0] : value;
+}

@@ -7,7 +7,7 @@ import type { ActionResult } from "@/lib/actions";
  * the general error message (if any) to show above the form.
  */
 export function applyActionErrors<T extends FieldValues>(
-  form: UseFormReturn<T>,
+  form: Pick<UseFormReturn<T>, "setError">,
   result: ActionResult<unknown> | undefined,
 ): string | null {
   if (!result || result.ok) return null;

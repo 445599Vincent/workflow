@@ -2,16 +2,12 @@ import "server-only";
 
 import { cache } from "react";
 
+import { sanitizeSearch } from "@/lib/search";
 import { createClient } from "@/lib/supabase/server";
 import { MATERIALS_PAGE_SIZE, type MaterialListParams } from "./schemas";
 
 const LIST_COLUMNS =
   "id, sku, name, category_name, unit_symbol, unit_decimals, stock_on_hand, stock_reserved, stock_available, min_stock, avg_cost, inventory_value, stock_status, is_active";
-
-/** Removes characters with meaning in PostgREST filter syntax. */
-function sanitizeSearch(term: string) {
-  return term.replace(/[%*,()"\\]/g, " ").trim();
-}
 
 export async function listMaterials(params: MaterialListParams) {
   const supabase = await createClient();
