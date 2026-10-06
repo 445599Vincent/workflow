@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { PackagePlusIcon, PencilIcon } from "lucide-react";
+import { PackagePlusIcon, PencilIcon, ScaleIcon } from "lucide-react";
 import { z } from "zod";
 
 import { PageHeader } from "@/components/shared/page-header";
@@ -58,6 +58,14 @@ export default async function MaterialPage({ params }: PageProps<"/materials/[id
                 <Link href={`/receipts/new?material=${id}`}>
                   <PackagePlusIcon />
                   Registrar entrada
+                </Link>
+              </Button>
+            )}
+            {can(user, "inventory.adjust") && (
+              <Button variant="outline" asChild>
+                <Link href={`/movements/adjust?material=${id}`}>
+                  <ScaleIcon />
+                  Ajustar
                 </Link>
               </Button>
             )}

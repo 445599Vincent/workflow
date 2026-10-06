@@ -58,13 +58,22 @@ COMPRA / ENTRADA → EXISTENCIA → RESERVA → ORDEN DE TRABAJO → CONSUMO REA
 | ENT-05 | Una entrada no se borra; se anula con motivo (permiso `inventory.void`). La anulación genera una salida inversa por línea al costo original (revierte el costo promedio) y solo es posible si hay stock disponible suficiente de **todos** los materiales; si no, no se anula nada. |
 | ENT-06 | La fecha de una entrada no puede ser futura. Cada línea debe respetar la precisión de la unidad del material (se valida en el formulario y en la BD). |
 
+## 5.1 Ajustes (AJU)
+
+| ID | Regla |
+|----|-------|
+| AJU-01 | Un ajuste corrige diferencias de inventario (conteo físico, corrección de un registro, material encontrado u otro motivo descrito). No sustituye a las entradas (compras) ni a los consumos de órdenes. Requiere `inventory.adjust`. |
+| AJU-02 | Ajuste positivo: se valora al costo indicado (por defecto, el promedio actual) y recalcula el promedio. Ajuste negativo: se valora al promedio vigente y no lo cambia. |
+| AJU-03 | Un ajuste negativo no puede dejar el disponible en negativo (INV-04), salvo la excepción explícita de un administrador (INV-05). |
+| AJU-04 | Cada ajuste tiene número (AJ-000001), queda en el kardex con su motivo y en la auditoría, y no se puede modificar ni borrar. |
+
 ## 6. Órdenes de trabajo (OT)
 
 | ID | Regla |
 |----|-------|
 | OT-01 | Número automático OT-000001. Datos: cliente, nombre del trabajo, descripción, fecha requerida, responsable, prioridad, estado. |
 | OT-02 | Estados: Borrador → Pendiente → Planificada → En producción → En instalación → Terminada. Cancelada desde cualquier estado no terminado. |
-| OT-03 | Transiciones permitidas: hacia adelante, retroceso de un paso por supervisor, y cancelación. Una OT Terminada o Cancelada es de solo lectura (reapertura: solo administrador con `work_orders.reopen`, auditada). Ya garantizado en BD: Terminada/Cancelada solo vía las RPC de cierre/cancelación (Fase 3). |
+| OT-03 | Transiciones: hacia adelante (se puede saltar etapas), retroceso de **un** paso, y cancelación desde cualquier estado no terminado (con motivo). Solo se termina desde *En producción* o *En instalación*. Una OT Terminada o Cancelada es de solo lectura; reabrirla requiere `work_orders.reopen` (Administrador) y la deja *En producción*. El estado solo cambia mediante la función `change_work_order_status` (las reglas viven en la BD). |
 | OT-04 | Todo cambio de estado se registra en el timeline (`work_order_events`) con usuario y fecha. |
 | OT-05 | Una OT está **atrasada** si `fecha requerida < hoy` y su estado no es Terminada ni Cancelada. |
 | OT-06 | La duración de una OT = `completed_at − started_at` (inicio = primera vez que pasa a *En producción*). |
@@ -82,7 +91,7 @@ COMPRA / ENTRADA → EXISTENCIA → RESERVA → ORDEN DE TRABAJO → CONSUMO REA
 
 | ID | Regla |
 |----|-------|
-| RES-01 | Se puede reservar material para una OT en estado Pendiente, Planificada, En producción o En instalación. |
+| RES-01 | Se puede reservar material **planificado** de una OT en estado Pendiente, Planificada, En producción o En instalación (`work_orders.reserve`). |
 | RES-02 | Solo se reserva hasta el stock **disponible** (INV-04). |
 | RES-03 | Una reserva aumenta `stock_reserved` (movimiento `reservation`); no cambia el físico. |
 | RES-04 | Liberar una reserva (total o parcial) genera `reservation_release`. |
@@ -94,10 +103,11 @@ COMPRA / ENTRADA → EXISTENCIA → RESERVA → ORDEN DE TRABAJO → CONSUMO REA
 | ID | Regla |
 |----|-------|
 | CON-01 | Consumo = material **útil** realmente utilizado en el trabajo. Se registra durante *En producción* o *En instalación*. |
-| CON-02 | Puede registrarse consumo de un material no planificado (queda marcado como "no planificado"). |
+| CON-02 | Puede registrarse consumo o merma de un material no planificado: se agrega a la OT como línea "no planificada" (estimado 0), para que su costo cuente en el real y la diferencia sea visible. |
 | CON-03 | Variación = (consumo + merma) − estimado. Variación % = variación / estimado × 100. |
 | CON-04 | Si la variación % supera `consumption_variance_alert_pct` (10 % por defecto) se resalta en rojo y genera alerta. Si es menor que el estimado se resalta como ahorro. |
-| CON-05 | Un consumo se anula con motivo; la anulación genera una devolución (`return`) al stock al mismo costo. |
+| CON-05 | Un consumo no se borra ni se edita: se **anula** con motivo (permiso `inventory.void`, Administrador y Supervisor). La anulación genera una devolución (`return`) al stock al mismo costo unitario del consumo, resta la cantidad y el costo de la línea y del costo real de la OT, y queda en el historial. |
+| CON-06 | Solo se anulan consumos o mermas de una OT En producción o En instalación. Para corregir una OT cerrada, un administrador la reabre primero. Lo anulado no vuelve a quedar reservado. |
 
 ### 6.4 Mermas (MER)
 
@@ -107,7 +117,8 @@ COMPRA / ENTRADA → EXISTENCIA → RESERVA → ORDEN DE TRABAJO → CONSUMO REA
 | MER-02 | La merma descuenta stock físico (movimiento `waste`) y suma al costo real de la OT. |
 | MER-03 | Ejemplo: se usaron 11.3 m² en total → consumo útil 10.5 m² + merma 0.8 m². Total = 11.3 m², comparado contra el estimado de 10 m² → +13 %. |
 | MER-04 | Motivos: Error de impresión, Corte, Daño, Prueba, Instalación, Defecto, Otro (Otro exige observación). |
-| MER-05 | Merma de almacén (sin OT) es válida (p. ej. material dañado por humedad). |
+| MER-05 | Merma de almacén (sin OT) es válida (p. ej. material dañado por humedad). Requiere `inventory.adjust`, motivo, y solo descuenta del **disponible** (no de lo reservado por órdenes); nunca deja stock negativo. |
+| MER-07 | Una merma se anula igual que un consumo (CON-05): devolución al mismo costo, con motivo; si era de una OT, aplica CON-06. |
 | MER-06 | Alerta de merma considerable: merma de una OT > `waste_alert_pct` (5 % por defecto) del consumo total de ese material. |
 
 ### 6.5 Cierre (CIE)
@@ -115,7 +126,7 @@ COMPRA / ENTRADA → EXISTENCIA → RESERVA → ORDEN DE TRABAJO → CONSUMO REA
 | ID | Regla |
 |----|-------|
 | CIE-01 | Al pasar a Terminada se muestra el resumen: costo estimado, costo real, variación RD$ y %, materiales utilizados, merma, responsable y duración. |
-| CIE-02 | Al cerrar: se liberan reservas sobrantes, se fija `actual_material_cost` y `completed_at`. |
+| CIE-02 | El costo real (`actual_material_cost`) se actualiza en vivo con cada consumo y merma. Al cerrar: se liberan las reservas sobrantes y se fija `completed_at`; como ya no se aceptan consumos, el costo real queda definitivo. |
 | CIE-03 | Después del cierre no se aceptan consumos ni mermas (salvo reapertura auditada). |
 
 ## 7. Retazos (RET) — preparado, Fase 5
@@ -132,12 +143,25 @@ COMPRA / ENTRADA → EXISTENCIA → RESERVA → ORDEN DE TRABAJO → CONSUMO REA
 | ID | Condición |
 |----|-----------|
 | ALR-01 | Stock disponible ≤ stock mínimo (material activo). Disponible ≤ 0 se muestra como "Sin existencia". |
-| ALR-02 | Una OT excede el material estimado (CON-04). |
+| ALR-02 | Una OT excede el material estimado (CON-04): OT En producción / En instalación, o terminada en los últimos 30 días, con estimado > 0 y variación % > `consumption_variance_alert_pct`. |
 | ALR-03 | OT atrasada (OT-05). |
-| ALR-04 | Merma considerable (MER-06). |
+| ALR-04 | Merma considerable (MER-06): en una OT abierta o terminada en los últimos 30 días, la merma de un material supera `waste_alert_pct` de lo usado (consumo + merma) de ese material en la OT. |
 
-En v1 las alertas se **calculan** al consultar (vistas/funciones). No se guardan
-notificaciones hasta definir canales (correo, push).
+En v1 las alertas se **calculan** al consultar (función `get_alerts`). No se guardan
+notificaciones hasta definir canales (correo, push). Todos los usuarios ven las
+alertas.
+
+## 8.1 Reportes (REP)
+
+| ID | Regla |
+|----|-------|
+| REP-01 | Consumo y merma se toman de los registros **no anulados** (D-030). Un consumo anulado no cuenta en ningún reporte ni en el dashboard. |
+| REP-02 | Los períodos son fechas del negocio (zona `America/Santo_Domingo`), con inicio y fin incluidos. Por defecto: el mes en curso. |
+| REP-03 | Consumo por material: cantidad y costo de consumo útil, cantidad y costo de merma, total y % de merma sobre lo usado, en el período. |
+| REP-04 | Costo por orden (estimado vs real): órdenes **terminadas** en el período, con costo estimado, real, merma, variación RD$ y %. |
+| REP-05 | Consumo por cliente: costo de consumo y merma del período agrupado por el cliente de la OT; las OT sin cliente aparecen como "Sin cliente". |
+| REP-06 | Inventario actual: existencia física, reservada, disponible, costo promedio y valor (físico × promedio) por material, con totales por categoría. No depende del período. |
+| REP-07 | Todo reporte se puede exportar a CSV (D-031) con los mismos filtros que se ven en pantalla. |
 
 ## 9. Permisos
 
@@ -160,6 +184,15 @@ notificaciones hasta definir canales (correo, push).
 | `audit.view` | ✔ | ✔ | | | |
 | `users.manage` | ✔ | | | | |
 | `settings.manage` | ✔ | | | | |
+
+## 9.1 Usuarios (USR)
+
+| ID | Regla |
+|----|-------|
+| USR-01 | Solo el Administrador (`users.manage`) crea usuarios, cambia roles, activa/desactiva y restablece contraseñas. |
+| USR-02 | Un usuario nuevo o con contraseña restablecida recibe una contraseña temporal y debe elegir una nueva antes de usar el sistema. |
+| USR-03 | Nadie puede cambiar su propio rol ni desactivarse (evita quedarse sin administrador). |
+| USR-04 | Los usuarios no se borran: se desactivan. Un usuario inactivo no puede ingresar ni ver datos, y su historial (movimientos, auditoría) se conserva con su nombre. |
 
 ## 10. Auditoría (AUD)
 

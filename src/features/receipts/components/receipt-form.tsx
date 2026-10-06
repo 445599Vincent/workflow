@@ -26,6 +26,7 @@ import { formatMoney, formatQuantityWithUnit, todayISODate } from "@/lib/format"
 import { applyActionErrors } from "@/lib/forms";
 import { decimalsHint, exceedsDecimals } from "@/lib/validation";
 import { cn } from "@/lib/utils";
+import { MaterialCombobox } from "@/features/materials/components/material-combobox";
 import { postReceipt } from "../actions";
 import type { ReceiptFormOptions } from "../queries";
 import {
@@ -35,7 +36,6 @@ import {
   type ReceiptFormValues,
   type ReceiptInput,
 } from "../schemas";
-import { MaterialCombobox } from "./material-combobox";
 
 const NONE = "none";
 const LINE_GRID = "md:grid-cols-[minmax(0,1fr)_9rem_9rem_8rem_2.25rem]";

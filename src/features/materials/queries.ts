@@ -139,3 +139,33 @@ export async function listCategoryOptions() {
   if (error) throw new Error(`No se pudieron cargar las categorías: ${error.message}`);
   return data;
 }
+
+/** Active materials for pickers (receipts, adjustments): small, flat rows. */
+export async function listMaterialOptions() {
+  const supabase = await createClient();
+  const { data, error } = await supabase
+    .from("materials_overview")
+    .select(
+      "id, sku, name, unit_symbol, unit_name, unit_decimals, last_cost, avg_cost, stock_on_hand, stock_reserved, stock_available",
+    )
+    .eq("is_active", true)
+    .order("name");
+  if (error) throw new Error(`No se pudieron cargar los materiales: ${error.message}`);
+
+  // View columns are nullable in the generated types; these never are.
+  return data.map((row) => ({
+    id: row.id!,
+    sku: row.sku!,
+    name: row.name!,
+    unitSymbol: row.unit_symbol ?? "",
+    unitName: row.unit_name ?? "",
+    unitDecimals: row.unit_decimals ?? 4,
+    lastCost: row.last_cost ?? 0,
+    avgCost: row.avg_cost ?? 0,
+    stockOnHand: row.stock_on_hand ?? 0,
+    stockReserved: row.stock_reserved ?? 0,
+    stockAvailable: row.stock_available ?? 0,
+  }));
+}
+
+export type MaterialOption = Awaited<ReturnType<typeof listMaterialOptions>>[number];

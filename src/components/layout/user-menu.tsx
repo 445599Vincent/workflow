@@ -1,4 +1,5 @@
-import { LogOutIcon } from "lucide-react";
+import Link from "next/link";
+import { KeyRoundIcon, LogOutIcon } from "lucide-react";
 
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
@@ -37,6 +38,12 @@ export function UserMenu({ fullName, email, roleCode }: UserMenuProps) {
           <p className="mt-1 text-xs text-muted-foreground">Rol: {roleLabel(roleCode)}</p>
         </DropdownMenuLabel>
         <DropdownMenuSeparator />
+        <DropdownMenuItem asChild>
+          <Link href="/reset-password">
+            <KeyRoundIcon />
+            Cambiar contraseña
+          </Link>
+        </DropdownMenuItem>
         <form action={signOut}>
           <DropdownMenuItem asChild>
             <button type="submit" className="w-full">

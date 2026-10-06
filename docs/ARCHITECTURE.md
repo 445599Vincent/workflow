@@ -95,7 +95,7 @@ Consecuencias:
 3. **Nada crítico se borra.** Se usa `is_active`, anulación (`voided_at`) o
    movimientos de reverso. Las tablas de libro mayor rechazan `UPDATE`/`DELETE`.
 4. **Server-first.** Lecturas en Server Components; el cliente solo recibe lo
-   necesario. No se expone la `service_role` key a la aplicación.
+   necesario. La `service_role` key nunca llega al navegador (ver D-022).
 5. **Simplicidad para el almacén.** Pocas pantallas, acciones claras, lenguaje del
    negocio en español, números grandes y legibles.
 
@@ -181,8 +181,8 @@ líneas), los materiales se bloquean en orden de `id` para evitar interbloqueos.
 ## 7. Seguridad
 
 - **Autenticación:** Supabase Auth (email + contraseña). No hay registro público:
-  los usuarios los crea un administrador (invitación desde Supabase en Fase 1,
-  pantalla de Usuarios en Fase 2).
+  los usuarios los crea un administrador desde la pantalla **Usuarios** con una
+  contraseña temporal, que el usuario debe cambiar en su primer ingreso (D-023).
 - **Autorización:** rol por usuario (`profiles.role_code`) y permisos por rol
   (`role_permissions`). La función SQL `has_permission('materials.manage')` se usa
   en las políticas RLS y en las RPC. La UI consulta los mismos permisos solo para
@@ -191,8 +191,12 @@ líneas), los materiales se bloquean en orden de `id` para evitar interbloqueos.
 - **Validación doble:** zod en el cliente (UX) y en el servidor (Server Action),
   más `CHECK`/triggers/RPC en la base de datos.
 - **Secretos:** solo `NEXT_PUBLIC_SUPABASE_URL` y la clave pública
-  (`NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY`) llegan al navegador. La `service_role`
-  key no se usa en la aplicación.
+  (`NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY`) llegan al navegador. La
+  `SUPABASE_SERVICE_ROLE_KEY` es opcional y **solo del servidor**: la usa
+  únicamente `src/lib/supabase/admin.ts` para crear cuentas y cambiar contraseñas
+  en Supabase Auth, después de comprobar `users.manage` con la sesión del
+  administrador (D-022). Todo lo demás (roles, estado, datos) usa el JWT del
+  usuario y pasa por RLS.
 
 ### Roles
 
@@ -226,10 +230,10 @@ La matriz completa de permisos está en [BUSINESS_RULES.md](./BUSINESS_RULES.md#
 
 | Nivel | Qué | Dónde |
 |-------|-----|-------|
-| Base de datos | 52 aserciones: permisos, RLS, stock negativo, costo promedio, anulación de entradas, inmutabilidad, ciclo de vida de OT | `supabase/tests/inventory_rules_test.sql` (CI) |
+| Base de datos | 61 aserciones: permisos, RLS, stock negativo, costo promedio, anulación de entradas, catálogos, inmutabilidad, ciclo de vida de OT | `supabase/tests/inventory_rules_test.sql` (CI) |
 | Concurrencia | Dos sesiones retirando el mismo material: la segunda espera el bloqueo y es rechazada con el saldo actualizado | Verificado manualmente; ver §6 |
 | Aplicación | Formato, lint, typecheck y build | CI |
-| Extremo a extremo | Login, dashboard, materias primas, proveedores, entradas (crear, anular), permisos de Almacén y Consulta, móvil | Verificado con Playwright contra GoTrue + PostgREST locales; automatizar en Fase 2 |
+| Extremo a extremo | Login, dashboard, materias primas, proveedores, entradas (crear, anular), ajustes, movimientos, catálogos, usuarios (crear, cambio obligatorio de contraseña, restablecer, desactivar), permisos por rol, móvil | Verificado con Playwright contra GoTrue + PostgREST locales; automatizar en Fase 2 |
 
 ## 8. Integración futura con ADM Cloud
 
@@ -268,3 +272,13 @@ No se asume que ADM Cloud tenga API. Se prepara únicamente:
 | D-019 | Listados con filtros, orden y paginación en la URL, resueltos en el servidor. | Enlaces compartibles, botón "atrás" funcional y escalable a miles de materiales. |
 | D-020 | El formulario de entradas carga los materiales activos y filtra en el navegador. | Búsqueda instantánea y sin conexión entre teclas; adecuado hasta unos pocos miles de materiales. Si se supera, cambiar a búsqueda en el servidor. |
 | D-021 | Anular una entrada es todo o nada y se bloquea si el material ya se consumió. | Evita stock negativo silencioso; el supervisor corrige con un ajuste si el material ya se usó. |
+| D-022 | La creación de cuentas y el restablecimiento de contraseñas usan la `service_role` key en un módulo `server-only` (`lib/supabase/admin.ts`), solo después de verificar `users.manage` con la sesión del usuario. Rol, estado y nombre se cambian con la sesión del administrador (RLS + trigger), para que la auditoría registre quién lo hizo. Si la clave no está configurada, la pantalla funciona en modo limitado (sin crear usuarios). | Supabase Auth no permite crear usuarios sin privilegios de servicio; limitarla a un archivo del servidor reduce la superficie de riesgo. |
+| D-023 | Usuarios nuevos reciben una contraseña temporal (no invitación por correo) y `profiles.must_change_password = true`; la app los lleva a cambiarla antes de usar el sistema. | El correo integrado de Supabase solo envía unos pocos mensajes por hora y únicamente a miembros del proyecto; así no depende de configurar SMTP. |
+| D-024 | Consumo/merma de un material no planificado crea una línea en `work_order_materials` con `is_planned = false` y cantidad planificada 0. | Toda la ejecución de la OT se resume por línea (reservado, consumido, merma, costo real) sin casos especiales. |
+| D-025 | Las transiciones de estado se validan en el trigger de `work_orders` y el estado solo se cambia con la RPC `change_work_order_status` (se retira el permiso de columna `status`). | Una sola fuente de reglas; cancelar y terminar liberan reservas en la misma transacción. |
+| D-026 | `work_order_materials.actual_cost` y `work_orders.actual_material_cost` son caches que las RPC actualizan en cada consumo/merma (costo congelado del movimiento). | Estimado vs real disponible en todo momento, no solo al cerrar; el dashboard lo usa directamente. |
+| D-027 | Orden de bloqueo en las RPC de órdenes: primero la fila de la OT, después los materiales (por `id`). | Evita interbloqueos cuando una cancelación libera varios materiales a la vez. |
+| D-028 | Anular un consumo o una merma escribe un movimiento `return` al **costo congelado del registro** (recalcula el promedio como una entrada a ese costo), marca `voided_*` y descuenta los caches de la línea y el costo real de la OT. No recrea reservas. Solo con la OT En producción o En instalación (una OT cerrada se reabre primero, lo que queda auditado); requiere `inventory.void`. | El registro original no se borra ni se edita: el libro mayor muestra la corrección. Devolver al costo original deja el valor del inventario como si el consumo no hubiera ocurrido. |
+| D-029 | La merma de almacén (sin OT) usa su propia RPC `register_warehouse_waste` con permiso `inventory.adjust`; descuenta solo del **disponible** (nunca de lo reservado por órdenes) y no admite la excepción de stock negativo. | Una merma de almacén es una corrección de inventario como un ajuste, pero con motivo de merma para que cuente en los reportes de desperdicio. Si el físico real es menor, se corrige con un ajuste. |
+| D-030 | Reportes y alertas se calculan con funciones SQL `security invoker` sobre la vista `usage_records` (consumos y mermas **no anulados**). Los períodos son fechas del negocio (`America/Santo_Domingo`), inclusivas. El dashboard usa la misma vista. | Una sola definición de "consumo" en toda la app: las anulaciones (D-028) se descuentan en todos lados, y RLS sigue aplicando. |
+| D-031 | Exportación como CSV (UTF-8 con BOM, separador coma, punto decimal) desde un Route Handler autenticado (`/reports/export`), no XLSX. | Excel lo abre directamente con acentos correctos; sin dependencias pesadas. XLSX se puede agregar después si hace falta formato. |

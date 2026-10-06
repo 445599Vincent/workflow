@@ -38,7 +38,7 @@ export function KpiGrid({ summary }: { summary: DashboardSummary }) {
         value={formatMoney(summary.inventory_value)}
         icon={WalletIcon}
         hint={`${summary.active_materials} materiales activos`}
-        href="/materials"
+        href="/inventory"
       />
       <StatCard
         label="Materiales bajo mínimo"

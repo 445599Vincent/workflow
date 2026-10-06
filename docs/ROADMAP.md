@@ -9,7 +9,7 @@ antes de continuar. Leyenda: ✅ hecho · 🟡 parcial · ⬜ pendiente.
 - ✅ `docs/ARCHITECTURE.md`, `docs/DATABASE.md`, `docs/BUSINESS_RULES.md`, `docs/ROADMAP.md`
 - ✅ README actualizado
 
-## Fase 1 — Fundación 🟡
+## Fase 1 — Fundación ✅
 
 - ✅ Proyecto Next.js 16 + TypeScript estricto + Tailwind 4 + shadcn/ui
 - ✅ Paleta y tokens de diseño de Workflow
@@ -19,40 +19,54 @@ antes de continuar. Leyenda: ✅ hecho · 🟡 parcial · ⬜ pendiente.
 - ✅ Esquema inicial completo (migraciones 001–007) con RLS y RPC de inventario (entradas y ajustes listos en BD; falta su interfaz)
 - ✅ Roles y permisos en base de datos; permisos expuestos a la UI
 - ✅ Dashboard inicial (KPIs reales desde `get_dashboard_summary`)
-- ⬜ Pantalla de Usuarios (invitar, asignar rol, desactivar) — por ahora vía panel de Supabase + SQL (ver README)
+- ✅ Pantalla de Usuarios: crear con contraseña temporal, asignar rol, activar/desactivar, restablecer contraseña
 - ✅ CI en GitHub Actions (formato, lint, typecheck, build, migraciones y pruebas de BD)
 
-## Fase 2 — Inventario 🟡
+## Fase 2 — Inventario ✅
 
 - ✅ Materias primas v1: listar, buscar, filtrar, ordenar, paginar, crear (con existencia inicial), editar, consultar
 - ✅ Kardex (consulta en el detalle del material)
-- ⬜ Categorías (CRUD)
-- ⬜ Unidades (CRUD)
-- ⬜ Ubicaciones (CRUD)
+- ✅ Categorías, unidades y ubicaciones (Configuración: crear, editar, desactivar)
 - ✅ Proveedores: listar, buscar, crear, editar, desactivar, detalle con materiales y entradas
 - ✅ Entradas de inventario: formulario multi-línea con buscador de materiales, listado con filtros, detalle
-- ⬜ Ajustes de inventario (→ `create_inventory_adjustment`)
-- ⬜ Movimientos (listado global con filtros)
+- ✅ Ajustes de inventario con motivo, vista previa y excepción de stock negativo solo para administrador
+- ✅ Movimientos: libro mayor global con búsqueda y filtros por tipo y fecha
 - ✅ Anulación de entradas (`void_inventory_receipt`, con motivo y reverso del costo promedio)
-- ✅ Pruebas automáticas de reglas de base de datos (`supabase/tests/inventory_rules_test.sql`, 52 aserciones, en CI)
+- ✅ Pruebas automáticas de reglas de base de datos (`supabase/tests/inventory_rules_test.sql`, en CI)
 
-## Fase 3 — Órdenes de trabajo ⬜
+## Fase 3 — Órdenes de trabajo ✅
 
-- ⬜ Clientes (CRUD mínimo)
-- ⬜ Órdenes: crear, editar, cambiar estado, timeline
-- ⬜ Materiales planificados
-- ⬜ RPC: `reserve_material`, `release_reservation`, `consume_material`, `register_waste`, `change_work_order_status`, `close_work_order`
-- ⬜ Pantalla de producción simplificada (registrar consumo/merma desde tablet/celular)
-- ⬜ Cierre con resumen estimado vs real
+- ✅ Clientes: listar, buscar, crear, editar, desactivar
+- ✅ Órdenes: listar con filtros (abiertas, atrasadas, por estado, cliente), crear, editar
+- ✅ Materiales planificados: agregar, cambiar cantidad estimada, quitar (si no tiene movimientos)
+- ✅ Migración 011 y RPC: `reserve_material`, `release_reservation`, `consume_material`,
+  `register_waste`, `change_work_order_status` (el cierre es un cambio de estado, D-025)
+- ✅ Reservas: el consumo usa primero lo reservado; al terminar o cancelar se liberan las sobrantes
+- ✅ Consumo y merma por línea o de cualquier material (línea "no planificada", D-024)
+- ✅ Costo real en vivo (consumo + merma) y variación contra el umbral configurado
+- ✅ Estados: avanzar, retroceder un paso, terminar con resumen, cancelar con motivo, reabrir (administrador)
+- ✅ Historial de la orden (estados, planificación, reservas, consumos, mermas)
+- ✅ Uso desde tablet/celular en la página de la orden (botones por material)
+- ✅ Pruebas de BD de la ejecución (transiciones, reservas, consumo, merma, cierre, roles, invariantes del libro)
 
-## Fase 4 — Analítica ⬜
+## Fase 3b — Correcciones y merma de almacén ✅
 
-- ⬜ Dashboard completo (costo estimado vs real, materiales de mayor consumo, gráficos)
-- ⬜ Centro de alertas (ALR-01…04)
-- ⬜ Reportes: inventario actual, bajo mínimo, consumo por período/material/orden/cliente,
-  merma por material/orden, costo por orden, estimado vs real, movimientos
-- ⬜ Exportación a Excel/CSV
-- ⬜ Visor de auditoría
+- ✅ Migración 012: `void_consumption`, `void_waste`, `register_warehouse_waste` (D-028, D-029)
+- ✅ Anular consumos y mermas desde la orden (con motivo; devolución al mismo costo)
+- ✅ Pantalla Mermas (`/movements/waste`): mermas de órdenes y de almacén, filtros y total
+- ✅ Merma de almacén sin orden, solo del disponible
+- ✅ Filtro "Asignadas a mí" en órdenes
+
+## Fase 4 — Analítica 🟡
+
+- ✅ Migración 013: vista `usage_records` (sin anulados), reportes, `get_alerts`; el dashboard ya no cuenta lo anulado (D-030)
+- ✅ Centro de alertas (ALR-01…04) y resumen de alertas en el dashboard
+- ✅ Reportes: consumo por material, costo por orden (estimado vs real), consumo por cliente, inventario actual
+- ✅ Exportación a Excel (CSV con los mismos filtros, D-031)
+- ✅ Inventario: valor por categoría, bajo mínimo y sin existencia
+- ✅ Visor de auditoría (`audit.view`)
+- ⬜ Gráficos en el dashboard (tendencia de consumo y merma por mes)
+- ⬜ Exportación CSV del listado de movimientos y de mermas
 
 ## Fase 5 — Funcionalidades avanzadas ⬜
 
@@ -65,14 +79,15 @@ antes de continuar. Leyenda: ✅ hecho · 🟡 parcial · ⬜ pendiente.
 
 ## Siguiente paso recomendado
 
-1. Crear el proyecto Supabase de producción, aplicar migraciones y crear el primer administrador (README).
-2. Conectar Vercel y validar con el equipo de almacén materias primas, proveedores y entradas con datos reales.
-3. Completar Fase 2: ajustes de inventario (la RPC ya existe), listado global de movimientos y catálogos.
+1. Aplicar las migraciones 011, 012 y 013 en Supabase de producción (README → Actualizar una base ya instalada).
+2. Validar con producción el flujo completo de una orden real: planificar, reservar, consumir,
+   registrar merma y terminar; revisar el costo real contra lo esperado.
+3. Completar la Fase 4 (gráficos) y definir con el negocio las prioridades de la Fase 5.
 
 ## Pendientes de decisión con el negocio
 
 1. ¿Las entradas requieren aprobación de un supervisor o se registran directamente?
-2. ¿Quién puede reabrir una OT terminada?
+2. ¿Quién puede reabrir una OT terminada? (hoy: Administrador, permiso `work_orders.reopen`)
 3. Umbrales de alerta definitivos (variación de consumo y merma).
 4. ¿Se manejarán varios almacenes/sucursales? (hoy: un almacén con ubicaciones)
 5. Lista definitiva de categorías y unidades.

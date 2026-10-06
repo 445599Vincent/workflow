@@ -4,6 +4,8 @@ import { PlusIcon } from "lucide-react";
 
 import { PageHeader } from "@/components/shared/page-header";
 import { Button } from "@/components/ui/button";
+import { AlertsSummary } from "@/features/alerts/components/alerts-summary";
+import { countAlerts, getAlerts } from "@/features/alerts/queries";
 import { KpiGrid } from "@/features/dashboard/components/kpi-grid";
 import { RecentOrdersCard } from "@/features/dashboard/components/recent-orders-card";
 import { StockAlertsCard } from "@/features/dashboard/components/stock-alerts-card";
@@ -21,11 +23,12 @@ export const metadata: Metadata = { title: "Dashboard" };
 
 export default async function DashboardPage() {
   const user = await requireUser();
-  const [summary, alerts, orders, topConsumed] = await Promise.all([
+  const [summary, alerts, orders, topConsumed, allAlerts] = await Promise.all([
     getDashboardSummary(),
     getStockAlerts(),
     getRecentWorkOrders(),
     getTopConsumedMaterials(),
+    getAlerts(),
   ]);
   const firstName = user.fullName.split(" ")[0];
   const today = formatLongDate();
@@ -48,7 +51,11 @@ export default async function DashboardPage() {
         }
       />
       <KpiGrid summary={summary} />
-      <div className="grid gap-6 lg:grid-cols-2">
+      <section className="space-y-3">
+        <h2 className="text-sm font-medium text-muted-foreground">Alertas</h2>
+        <AlertsSummary counts={countAlerts(allAlerts)} />
+      </section>
+      <div className="grid gap-6 lg:grid-cols-2 [&>*]:min-w-0">
         <StockAlertsCard alerts={alerts} />
         <RecentOrdersCard orders={orders} />
       </div>
