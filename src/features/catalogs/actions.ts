@@ -8,9 +8,11 @@ import { createClient } from "@/lib/supabase/server";
 import {
   categoryFormSchema,
   locationFormSchema,
+  thresholdsSchema,
   unitFormSchema,
   type CategoryFormValues,
   type LocationFormValues,
+  type ThresholdsFormValues,
   type UnitFormValues,
 } from "./schemas";
 
@@ -114,5 +116,34 @@ export async function saveLocation(
   if (!data) return fail(NO_PERMISSION);
 
   revalidateCatalogs("/settings/locations");
+  return ok(undefined);
+}
+
+/**
+ * Alert thresholds (CON-04, MER-06). RLS lets only settings.manage update
+ * app_settings; every change is audited by the table trigger.
+ */
+export async function updateThresholds(values: ThresholdsFormValues): Promise<ActionResult> {
+  const parsed = thresholdsSchema.safeParse(values);
+  if (!parsed.success) return validationFailed(parsed.error);
+
+  const supabase = await createClient();
+  for (const [key, value] of [
+    ["consumption_variance_alert_pct", parsed.data.varianceAlertPct],
+    ["waste_alert_pct", parsed.data.wasteAlertPct],
+  ] as const) {
+    const { data, error } = await supabase
+      .from("app_settings")
+      .update({ value })
+      .eq("key", key)
+      .select("key");
+    if (error) return fromDatabaseError(error);
+    if (!data?.length) return fail("No tiene permiso para cambiar la configuración.");
+  }
+
+  revalidatePath("/settings");
+  revalidatePath("/alerts");
+  revalidatePath("/dashboard");
+  revalidatePath("/work-orders", "layout");
   return ok(undefined);
 }

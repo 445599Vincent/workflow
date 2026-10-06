@@ -1,7 +1,7 @@
 import { z } from "zod";
 
 import type { Database } from "@/types/database";
-import { optionalText } from "@/lib/validation";
+import { optionalText, requiredDecimalField } from "@/lib/validation";
 
 export type UnitKind = Database["public"]["Enums"]["unit_kind"];
 
@@ -58,3 +58,17 @@ export const locationFormSchema = z.object({
   isActive: z.boolean(),
 });
 export type LocationFormValues = z.input<typeof locationFormSchema>;
+
+// -----------------------------------------------------------------------------
+// Alert thresholds (app_settings, settings.manage) — CON-04, MER-06
+// -----------------------------------------------------------------------------
+const percentage = requiredDecimalField({ min: 0, maxDecimals: 1 }).refine(
+  (value) => value > 0 && value <= 100,
+  "Entre 0.1 y 100.",
+);
+
+export const thresholdsSchema = z.object({
+  varianceAlertPct: percentage,
+  wasteAlertPct: percentage,
+});
+export type ThresholdsFormValues = z.input<typeof thresholdsSchema>;

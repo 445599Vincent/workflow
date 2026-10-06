@@ -12,7 +12,15 @@ import {
 
 import { PageHeader } from "@/components/shared/page-header";
 import { Badge } from "@/components/ui/badge";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Card,
+  CardAction,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { ThresholdsDialog } from "@/features/catalogs/components/thresholds-dialog";
 import { getAppSettings, getCatalogCounts } from "@/features/catalogs/queries";
 import { can, requireUser } from "@/lib/auth/session";
 
@@ -120,9 +128,18 @@ export default async function SettingsPage() {
             Parámetros
           </CardTitle>
           <CardDescription>
-            Valores generales del sistema. Por ahora se consultan aquí; su edición llegará con la
-            pantalla de administración.
+            Valores generales del sistema. Los umbrales de alertas los puede cambiar un
+            administrador.
           </CardDescription>
+          {can(user, "settings.manage") && (
+            <CardAction>
+              <ThresholdsDialog
+                key={`${String(settings.consumption_variance_alert_pct?.value)}-${String(settings.waste_alert_pct?.value)}`}
+                varianceAlertPct={Number(settings.consumption_variance_alert_pct?.value ?? 10)}
+                wasteAlertPct={Number(settings.waste_alert_pct?.value ?? 5)}
+              />
+            </CardAction>
+          )}
         </CardHeader>
         <CardContent>
           <dl className="grid gap-3 text-sm">
