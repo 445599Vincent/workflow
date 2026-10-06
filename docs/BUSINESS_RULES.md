@@ -35,6 +35,16 @@ COMPRA / ENTRADA → EXISTENCIA → RESERVA → ORDEN DE TRABAJO → CONSUMO REA
 | INV-09 | Un material inactivo no admite entradas, reservas ni consumos, pero conserva su historial. | DB |
 | INV-10 | El stock y los costos de un material **no se editan** en el formulario del material. La existencia inicial se registra al crearlo (genera un ajuste "Inventario inicial"; basta el permiso `materials.manage`) o mediante ajustes (`inventory.adjust`). | DB + UI |
 
+## 3.1 Importación del catálogo de materiales (MAT)
+
+| ID | Regla | Dónde |
+|----|-------|-------|
+| MAT-01 | El catálogo se puede cargar desde un archivo CSV de Excel (plantilla en *Materias primas → Importar*), hasta 2000 materiales por archivo. Requiere `materials.manage`. | SRV + DB |
+| MAT-02 | Cada fila se valida con las mismas reglas que el formulario "Nuevo material" (código, nombre, stock mínimo/máximo, existencia inicial con costo y con la precisión de la unidad). Categoría, unidad, ubicación y proveedor deben existir y estar activos (se buscan por nombre o código, sin distinguir mayúsculas ni acentos). | SRV + DB |
+| MAT-03 | Ni el código ni el nombre pueden repetirse, ni con materiales existentes (activos o inactivos) ni dentro del archivo. | SRV (código también DB) |
+| MAT-04 | La importación es **todo o nada**: si alguna fila tiene errores no se crea ningún material. Primero se muestra una vista previa con los errores por fila. | SRV + DB |
+| MAT-05 | La existencia inicial de cada fila se registra igual que al crear un material a mano: un ajuste "Inventario inicial" (INV-10). La importación queda en auditoría como un solo evento. Solo crea materiales; no modifica los existentes. | DB |
+
 ## 4. Costos (CST)
 
 | ID | Regla |

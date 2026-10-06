@@ -257,6 +257,7 @@ Nadie puede modificar ni borrar registros de auditoría.
 | `next_document_number(text)` | no | Siguiente número de documento. |
 | `apply_stock_movement(...)` | **no** | Motor interno: bloquea, valida, inserta movimiento, actualiza saldos y costo promedio. |
 | `create_material(...)` | sí | Crea material (SKU automático opcional) y su existencia inicial en una sola transacción. Requiere `materials.manage` (ver ARCHITECTURE D-016). |
+| `import_materials(filas)` | sí | Crea un lote de materiales (hasta 2000) llamando a `create_material` por fila, en una sola transacción: todo o nada. Los errores indican la fila del archivo (D-033). |
 | `post_inventory_receipt(...)` | sí | Registra una entrada con N líneas. |
 | `create_inventory_adjustment(...)` | sí | Ajuste positivo/negativo con motivo. |
 | `void_inventory_receipt(entrada, motivo)` | sí | Anula una entrada: una salida de reverso por línea al costo original (revierte el promedio). Todo o nada; requiere `inventory.void`. |
@@ -326,6 +327,7 @@ Las funciones de reportes y alertas (013) son `security invoker`: respetan RLS.
 | `…_012_usage_voiding_warehouse_waste.sql` | Anulación de consumos y mermas (devolución al costo original) y merma de almacén. |
 | `…_013_reports_alerts.sql` | Vista `usage_records`, funciones de reportes y alertas; dashboard sin consumos anulados. |
 | `…_014_monthly_trend.sql` | `report_monthly_trend` para los gráficos del dashboard. |
+| `…_015_material_import.sql` | `import_materials` (importación del catálogo desde Excel). |
 
 **Regla para nuevas migraciones:** nunca editar una migración ya aplicada en un
 entorno; crear una nueva. Toda tabla nueva debe activar RLS y otorgar permisos
