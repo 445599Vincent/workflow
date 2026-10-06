@@ -226,10 +226,10 @@ La matriz completa de permisos está en [BUSINESS_RULES.md](./BUSINESS_RULES.md#
 
 | Nivel | Qué | Dónde |
 |-------|-----|-------|
-| Base de datos | 42 aserciones: permisos, RLS, stock negativo, costo promedio, inmutabilidad, ciclo de vida de OT | `supabase/tests/inventory_rules_test.sql` (CI) |
+| Base de datos | 52 aserciones: permisos, RLS, stock negativo, costo promedio, anulación de entradas, inmutabilidad, ciclo de vida de OT | `supabase/tests/inventory_rules_test.sql` (CI) |
 | Concurrencia | Dos sesiones retirando el mismo material: la segunda espera el bloqueo y es rechazada con el saldo actualizado | Verificado manualmente; ver §6 |
 | Aplicación | Formato, lint, typecheck y build | CI |
-| Extremo a extremo | Login, dashboard, materias primas (crear/editar/filtrar), permisos del rol Consulta, móvil | Verificado con Playwright contra GoTrue + PostgREST locales; automatizar en Fase 2 |
+| Extremo a extremo | Login, dashboard, materias primas, proveedores, entradas (crear, anular), permisos de Almacén y Consulta, móvil | Verificado con Playwright contra GoTrue + PostgREST locales; automatizar en Fase 2 |
 
 ## 8. Integración futura con ADM Cloud
 
@@ -266,3 +266,5 @@ No se asume que ADM Cloud tenga API. Se prepara únicamente:
 | D-017 | `last_cost` toma el costo de la existencia inicial mientras no haya compras (BR CST-02). | Evita mostrar RD$0.00 como último costo de materiales recién cargados. |
 | D-018 | Agregaciones del dashboard en funciones SQL (`get_dashboard_summary`, `get_top_consumed_materials`). | Una sola consulta por indicador; no se envían movimientos al navegador. |
 | D-019 | Listados con filtros, orden y paginación en la URL, resueltos en el servidor. | Enlaces compartibles, botón "atrás" funcional y escalable a miles de materiales. |
+| D-020 | El formulario de entradas carga los materiales activos y filtra en el navegador. | Búsqueda instantánea y sin conexión entre teclas; adecuado hasta unos pocos miles de materiales. Si se supera, cambiar a búsqueda en el servidor. |
+| D-021 | Anular una entrada es todo o nada y se bloquea si el material ya se consumió. | Evita stock negativo silencioso; el supervisor corrige con un ajuste si el material ya se usó. |

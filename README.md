@@ -155,8 +155,8 @@ Detalle en [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md#5-capas-y-estructura-de-c
 ## Estado actual
 
 Fase 0 completa; Fase 1 casi completa (falta la pantalla de Usuarios); Fase 2
-iniciada con el módulo de **Materias primas** y su kardex. Ver
-[docs/ROADMAP.md](docs/ROADMAP.md).
+en curso: **Materias primas** (con kardex), **Proveedores** y **Compras / Entradas**
+(con anulación). Ver [docs/ROADMAP.md](docs/ROADMAP.md).
 
 ## Convenciones de commits
 
