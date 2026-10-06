@@ -21,6 +21,7 @@ const ACTIONS: Record<string, string> = {
   insert: "Creó",
   update: "Modificó",
   delete: "Eliminó",
+  "materials.import": "Importó materiales",
   "inventory.receipt.posted": "Registró una entrada",
   "inventory.receipt.voided": "Anuló una entrada",
   "inventory.adjustment.created": "Registró un ajuste",

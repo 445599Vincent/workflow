@@ -4,6 +4,7 @@ import { cache } from "react";
 
 import { sanitizeSearch } from "@/lib/search";
 import { createClient } from "@/lib/supabase/server";
+import type { ImportCatalogs } from "./import";
 import { MATERIALS_PAGE_SIZE, type MaterialListParams } from "./schemas";
 
 const LIST_COLUMNS =
@@ -109,7 +110,7 @@ export async function getMaterialFormOptions() {
   const supabase = await createClient();
   const [categories, units, locations, suppliers] = await Promise.all([
     supabase.from("categories").select("id, name, is_active").order("sort_order").order("name"),
-    supabase.from("units").select("id, name, symbol, decimals, is_active").order("name"),
+    supabase.from("units").select("id, code, name, symbol, decimals, is_active").order("name"),
     supabase.from("locations").select("id, code, name, is_active").order("name"),
     supabase.from("suppliers").select("id, name, is_active").order("name"),
   ]);
@@ -169,3 +170,43 @@ export async function listMaterialOptions() {
 }
 
 export type MaterialOption = Awaited<ReturnType<typeof listMaterialOptions>>[number];
+
+const IMPORT_PAGE = 1000;
+
+/**
+ * Catalogs (active or not, for clear messages) and every existing material's
+ * SKU and name, to validate an import file. PostgREST caps responses at 1000
+ * rows, so materials are read page by page.
+ */
+export async function getMaterialImportCatalogs(): Promise<ImportCatalogs> {
+  const supabase = await createClient();
+  const [categories, units, locations, suppliers] = await Promise.all([
+    supabase.from("categories").select("id, name, is_active"),
+    supabase.from("units").select("id, code, name, symbol, decimals, is_active"),
+    supabase.from("locations").select("id, code, name, is_active"),
+    supabase.from("suppliers").select("id, code, name, is_active"),
+  ]);
+  const failed = [categories, units, locations, suppliers].find((result) => result.error);
+  if (failed?.error)
+    throw new Error(`No se pudieron cargar los catálogos: ${failed.error.message}`);
+
+  const materials: ImportCatalogs["materials"] = [];
+  for (let from = 0; ; from += IMPORT_PAGE) {
+    const { data, error } = await supabase
+      .from("materials")
+      .select("sku, name")
+      .order("sku")
+      .range(from, from + IMPORT_PAGE - 1);
+    if (error) throw new Error(`No se pudieron cargar los materiales: ${error.message}`);
+    materials.push(...data);
+    if (data.length < IMPORT_PAGE) break;
+  }
+
+  return {
+    categories: categories.data ?? [],
+    units: units.data ?? [],
+    locations: locations.data ?? [],
+    suppliers: suppliers.data ?? [],
+    materials,
+  };
+}

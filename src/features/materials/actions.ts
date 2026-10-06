@@ -3,8 +3,11 @@
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 
-import { fromDatabaseError, validationFailed, type ActionResult } from "@/lib/actions";
+import { fail, fromDatabaseError, ok, validationFailed, type ActionResult } from "@/lib/actions";
+import { can, getCurrentUser } from "@/lib/auth/session";
 import { createClient } from "@/lib/supabase/server";
+import { MAX_IMPORT_BYTES, validateMaterialImport, type ImportValidation } from "./import";
+import { getMaterialImportCatalogs } from "./queries";
 import {
   createMaterialSchema,
   updateMaterialSchema,
@@ -81,4 +84,51 @@ export async function updateMaterial(
   revalidatePath(`/materials/${id}`);
   revalidatePath("/dashboard");
   redirect(`/materials/${id}?notice=material-updated`);
+}
+
+// -----------------------------------------------------------------------------
+// Catalog import (MAT-01…05, D-033)
+// -----------------------------------------------------------------------------
+export type MaterialImportPreview = Omit<ImportValidation, "materials">;
+
+async function validateImportFile(text: string): Promise<ActionResult<ImportValidation>> {
+  if (!can(await getCurrentUser(), "materials.manage")) {
+    return fail("No tiene permiso para importar materiales.");
+  }
+  if (typeof text !== "string" || text.length > MAX_IMPORT_BYTES) {
+    return fail("El archivo es demasiado grande. Divídalo en varios archivos.");
+  }
+  return ok(validateMaterialImport(text, await getMaterialImportCatalogs()));
+}
+
+/** Parses and validates the file without creating anything. */
+export async function previewMaterialImport(
+  text: string,
+): Promise<ActionResult<MaterialImportPreview>> {
+  const result = await validateImportFile(text);
+  if (!result.ok) return result;
+  const { fileErrors, ignoredColumns, rows } = result.data;
+  return ok({ fileErrors, ignoredColumns, rows });
+}
+
+/**
+ * Validates the file again (the catalog may have changed since the preview)
+ * and creates every material in one transaction: all or nothing.
+ */
+export async function importMaterials(text: string): Promise<ActionResult> {
+  const result = await validateImportFile(text);
+  if (!result.ok) return result;
+  const { fileErrors, rows, materials } = result.data;
+  if (fileErrors.length > 0 || materials.length !== rows.length) {
+    return fail("El archivo tiene errores. Corríjalos y vuelva a cargarlo.");
+  }
+
+  const supabase = await createClient();
+  const { error } = await supabase.rpc("import_materials", { p_rows: materials });
+  if (error) return fromDatabaseError(error);
+
+  revalidatePath("/materials");
+  revalidatePath("/inventory");
+  revalidatePath("/dashboard");
+  redirect("/materials?notice=materials-imported");
 }
