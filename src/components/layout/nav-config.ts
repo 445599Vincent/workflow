@@ -61,7 +61,7 @@ export const NAV_GROUPS: NavGroup[] = [
         comingSoon: true,
         permission: "users.manage",
       },
-      { href: "/settings", label: "Configuración", icon: SettingsIcon, comingSoon: true },
+      { href: "/settings", label: "Configuración", icon: SettingsIcon },
     ],
   },
 ];
