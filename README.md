@@ -66,8 +66,10 @@ npx supabase db push          # aplica las migraciones
 npm run db:types              # regenera src/types/database.ts
 ```
 
-**Desarrollo local:** `npx supabase start` y luego `npx supabase db reset`
-(aplica migraciones + `supabase/seed.sql` con datos de demostración).
+**Desarrollo local (Docker):** `npx supabase start` y luego `npx supabase db reset`
+(aplica migraciones + `supabase/seed.sql` con datos de demostración). Use la URL
+y la clave pública que imprime `supabase start` en `.env.local`.
+Usuario demo: `admin@workflow.local` / `workflow-demo` (solo local).
 
 **Sin CLI:** copiar el contenido de cada archivo de `supabase/migrations/` (en
 orden) en el SQL Editor del panel de Supabase.
@@ -88,6 +90,31 @@ No hay registro público. Para crear el primer usuario:
 3. Configurar en Supabase → **Authentication → URL Configuration** la *Site URL*
    y agregar `https://<tu-dominio>/auth/confirm` a *Redirect URLs* (recuperación
    de contraseña).
+4. Desactivar el registro público: **Authentication → Sign In / Providers →
+   Allow new users to sign up = off** (los usuarios los crea un administrador).
+
+### Recuperación de contraseña
+
+Funciona con la plantilla de correo por defecto. Para que el enlace funcione
+aunque se abra en otro dispositivo, se recomienda cambiar la plantilla
+**Reset Password** (Authentication → Emails) a:
+
+```html
+<a href="{{ .SiteURL }}/auth/confirm?token_hash={{ .TokenHash }}&type=recovery&next=/reset-password">
+  Crear nueva contraseña
+</a>
+```
+
+### Pruebas de base de datos
+
+Sobre una base con las migraciones aplicadas y **sin** semilla:
+
+```bash
+psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f supabase/tests/inventory_rules_test.sql
+```
+
+Corre dentro de una transacción con `ROLLBACK` (no deja datos). CI ejecuta lo
+mismo en cada PR sobre PostgreSQL 17 (`.github/workflows/ci.yml`).
 
 ## Scripts
 
@@ -97,6 +124,7 @@ No hay registro público. Para crear el primer usuario:
 | `npm run build` | Build de producción |
 | `npm run start` | Servir el build |
 | `npm run lint` | ESLint |
+| `npm run format:check` | Verificar formato (Prettier) |
 | `npm run typecheck` | Verificación de tipos (TypeScript) |
 | `npm run format` | Prettier |
 | `npm run db:types` | Regenerar tipos desde el proyecto Supabase vinculado |
@@ -112,6 +140,7 @@ No hay registro público. Para crear el primer usuario:
 ```
 docs/                     Documentación del sistema
 supabase/migrations/      Esquema de base de datos (SQL versionado)
+supabase/tests/           Pruebas de reglas de BD (+ emulación de Supabase para CI)
 supabase/seed.sql         Datos de demostración (solo local)
 src/app/                  Rutas (auth y app autenticada)
 src/components/           UI (shadcn), layout y componentes compartidos
@@ -122,6 +151,12 @@ src/types/database.ts     Tipos del esquema
 ```
 
 Detalle en [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md#5-capas-y-estructura-de-carpetas).
+
+## Estado actual
+
+Fase 0 completa; Fase 1 casi completa (falta la pantalla de Usuarios); Fase 2
+iniciada con el módulo de **Materias primas** y su kardex. Ver
+[docs/ROADMAP.md](docs/ROADMAP.md).
 
 ## Convenciones de commits
 

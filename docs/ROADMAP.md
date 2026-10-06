@@ -9,23 +9,23 @@ antes de continuar. Leyenda: ✅ hecho · 🟡 parcial · ⬜ pendiente.
 - ✅ `docs/ARCHITECTURE.md`, `docs/DATABASE.md`, `docs/BUSINESS_RULES.md`, `docs/ROADMAP.md`
 - ✅ README actualizado
 
-## Fase 1 — Fundación ⬜
+## Fase 1 — Fundación 🟡
 
-- ⬜ Proyecto Next.js 16 + TypeScript estricto + Tailwind 4 + shadcn/ui
-- ⬜ Paleta y tokens de diseño de Workflow
-- ⬜ Clientes Supabase (navegador, servidor, proxy) y protección de rutas
-- ⬜ Login, recuperación y restablecimiento de contraseña, cierre de sesión
-- ⬜ Layout: sidebar (colapsable en móvil), header, menú de usuario
-- ⬜ Esquema inicial completo (migraciones 001–007) con RLS y RPC de inventario
-- ⬜ Roles y permisos en base de datos; permisos expuestos a la UI
-- ⬜ Dashboard inicial (KPIs reales desde `get_dashboard_summary`)
+- ✅ Proyecto Next.js 16 + TypeScript estricto + Tailwind 4 + shadcn/ui
+- ✅ Paleta y tokens de diseño de Workflow
+- ✅ Clientes Supabase (navegador, servidor, proxy) y protección de rutas
+- ✅ Login, recuperación y restablecimiento de contraseña, cierre de sesión
+- ✅ Layout: sidebar (colapsable en móvil), header, menú de usuario
+- ✅ Esquema inicial completo (migraciones 001–007) con RLS y RPC de inventario (entradas y ajustes listos en BD; falta su interfaz)
+- ✅ Roles y permisos en base de datos; permisos expuestos a la UI
+- ✅ Dashboard inicial (KPIs reales desde `get_dashboard_summary`)
 - ⬜ Pantalla de Usuarios (invitar, asignar rol, desactivar) — por ahora vía panel de Supabase + SQL (ver README)
-- ⬜ CI en GitHub Actions (lint + typecheck + build)
+- ✅ CI en GitHub Actions (formato, lint, typecheck, build, migraciones y pruebas de BD)
 
-## Fase 2 — Inventario ⬜
+## Fase 2 — Inventario 🟡
 
-- ⬜ Materias primas v1: listar, buscar, filtrar, ordenar, paginar, crear (con existencia inicial), editar, consultar
-- ⬜ Kardex (consulta en el detalle del material)
+- ✅ Materias primas v1: listar, buscar, filtrar, ordenar, paginar, crear (con existencia inicial), editar, consultar
+- ✅ Kardex (consulta en el detalle del material)
 - ⬜ Categorías (CRUD)
 - ⬜ Unidades (CRUD)
 - ⬜ Ubicaciones (CRUD)
@@ -34,7 +34,7 @@ antes de continuar. Leyenda: ✅ hecho · 🟡 parcial · ⬜ pendiente.
 - ⬜ Ajustes de inventario (→ `create_inventory_adjustment`)
 - ⬜ Movimientos (listado global con filtros)
 - ⬜ Anulación de entradas
-- ⬜ Pruebas automáticas de las RPC de inventario (pgTAP o script SQL)
+- ✅ Pruebas automáticas de reglas de base de datos (`supabase/tests/inventory_rules_test.sql`, 42 aserciones, en CI)
 
 ## Fase 3 — Órdenes de trabajo ⬜
 
@@ -62,6 +62,12 @@ antes de continuar. Leyenda: ✅ hecho · 🟡 parcial · ⬜ pendiente.
 - ⬜ Importación desde Excel (catálogo inicial de materiales)
 - ⬜ Conversiones de unidades (tabla `unit_conversions` ya creada)
 - ⬜ Integración ADM Cloud (requiere documentación técnica real)
+
+## Siguiente paso recomendado
+
+1. Crear el proyecto Supabase de producción, aplicar migraciones y crear el primer administrador (README).
+2. Conectar Vercel y validar con el equipo de almacén el módulo de Materias primas con datos reales.
+3. Continuar Fase 2: Entradas de inventario (la RPC `post_inventory_receipt` ya existe) y Proveedores.
 
 ## Pendientes de decisión con el negocio
 

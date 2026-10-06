@@ -33,14 +33,14 @@ COMPRA / ENTRADA → EXISTENCIA → RESERVA → ORDEN DE TRABAJO → CONSUMO REA
 | INV-07 | Cantidades siempre > 0 y con la precisión de la unidad base (`units.decimals`; p. ej. tornillos = enteros). | DB + SRV + UI |
 | INV-08 | La unidad base de un material no puede cambiarse si el material ya tiene movimientos. | DB |
 | INV-09 | Un material inactivo no admite entradas, reservas ni consumos, pero conserva su historial. | DB |
-| INV-10 | El stock y los costos de un material **no se editan** en el formulario del material. La existencia inicial se registra al crearlo (genera un ajuste "Inventario inicial") o mediante ajustes. | DB + UI |
+| INV-10 | El stock y los costos de un material **no se editan** en el formulario del material. La existencia inicial se registra al crearlo (genera un ajuste "Inventario inicial"; basta el permiso `materials.manage`) o mediante ajustes (`inventory.adjust`). | DB + UI |
 
 ## 4. Costos (CST)
 
 | ID | Regla |
 |----|-------|
 | CST-01 | Costeo por **promedio ponderado móvil**: en cada entrada `nuevo_promedio = (físico × promedio + cantidad × costo) / (físico + cantidad)`. Si el físico previo es ≤ 0, el promedio pasa a ser el costo de la entrada. |
-| CST-02 | `last_cost` = costo unitario de la última entrada. |
+| CST-02 | `last_cost` = costo unitario de la última entrada. Si aún no hay entradas, toma el costo de la existencia inicial (o del primer ajuste positivo). |
 | CST-03 | Salidas, consumos y mermas se valoran al costo promedio **vigente en ese momento**; ese costo queda congelado en el movimiento y en el consumo. |
 | CST-04 | Reservas y liberaciones no tienen valor monetario. |
 | CST-05 | Costo estimado de una OT = Σ (cantidad planificada × costo promedio al planificar). |
@@ -63,7 +63,7 @@ COMPRA / ENTRADA → EXISTENCIA → RESERVA → ORDEN DE TRABAJO → CONSUMO REA
 |----|-------|
 | OT-01 | Número automático OT-000001. Datos: cliente, nombre del trabajo, descripción, fecha requerida, responsable, prioridad, estado. |
 | OT-02 | Estados: Borrador → Pendiente → Planificada → En producción → En instalación → Terminada. Cancelada desde cualquier estado no terminado. |
-| OT-03 | Transiciones permitidas: hacia adelante, retroceso de un paso por supervisor, y cancelación. Una OT Terminada o Cancelada es de solo lectura (reapertura: solo administrador, auditada). |
+| OT-03 | Transiciones permitidas: hacia adelante, retroceso de un paso por supervisor, y cancelación. Una OT Terminada o Cancelada es de solo lectura (reapertura: solo administrador con `work_orders.reopen`, auditada). Ya garantizado en BD: Terminada/Cancelada solo vía las RPC de cierre/cancelación (Fase 3). |
 | OT-04 | Todo cambio de estado se registra en el timeline (`work_order_events`) con usuario y fecha. |
 | OT-05 | Una OT está **atrasada** si `fecha requerida < hoy` y su estado no es Terminada ni Cancelada. |
 | OT-06 | La duración de una OT = `completed_at − started_at` (inicio = primera vez que pasa a *En producción*). |
@@ -155,6 +155,7 @@ notificaciones hasta definir canales (correo, push).
 | `work_orders.reserve` — reservar/liberar | ✔ | ✔ | ✔ | | |
 | `work_orders.consume` — consumos y mermas | ✔ | ✔ | ✔ | ✔ | |
 | `work_orders.close` — cerrar | ✔ | ✔ | | | |
+| `work_orders.reopen` — reabrir OT cerrada | ✔ | | | | |
 | `audit.view` | ✔ | ✔ | | | |
 | `users.manage` | ✔ | | | | |
 | `settings.manage` | ✔ | | | | |
