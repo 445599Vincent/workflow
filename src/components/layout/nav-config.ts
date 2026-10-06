@@ -58,7 +58,6 @@ export const NAV_GROUPS: NavGroup[] = [
         href: "/users",
         label: "Usuarios",
         icon: UsersIcon,
-        comingSoon: true,
         permission: "users.manage",
       },
       { href: "/settings", label: "Configuración", icon: SettingsIcon },

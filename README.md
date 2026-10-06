@@ -50,8 +50,10 @@ npm run dev                  # http://localhost:3000
 | `NEXT_PUBLIC_SUPABASE_URL` | URL del proyecto (Supabase → Project Settings → API) |
 | `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` | Clave pública (`sb_publishable_…` o la clave `anon` en proyectos antiguos) |
 | `NEXT_PUBLIC_SITE_URL` | URL pública de la app (para enlaces de recuperación de contraseña) |
+| `SUPABASE_SERVICE_ROLE_KEY` | **Opcional, solo servidor.** Permite crear usuarios y restablecer contraseñas desde la pantalla Usuarios (Supabase → Project Settings → API Keys → *secret*). Nunca con prefijo `NEXT_PUBLIC_`. |
 
-La `service_role` key **no** se usa en la aplicación.
+La clave secreta solo la usa el servidor, en un único módulo
+(`src/lib/supabase/admin.ts`), para administrar cuentas (ver ARCHITECTURE D-022).
 
 ### Base de datos
 
@@ -96,6 +98,14 @@ No hay registro público. Para crear el primer usuario:
    de contraseña).
 4. Desactivar el registro público: **Authentication → Sign In / Providers →
    Allow new users to sign up = off** (los usuarios los crea un administrador).
+
+### Resto del equipo
+
+Con el administrador creado, los demás usuarios se crean desde **Usuarios** en la
+app (requiere `SUPABASE_SERVICE_ROLE_KEY`): nombre, correo, rol y una contraseña
+temporal que el usuario cambia en su primer ingreso. Sin esa variable, la pantalla
+permite cambiar roles y activar o desactivar, y las cuentas se crean desde el panel
+de Supabase como el primer administrador.
 
 ### Recuperación de contraseña
 

@@ -63,9 +63,8 @@ export default async function SettingsPage() {
     links.push({
       href: "/users",
       title: "Usuarios y roles",
-      description: "Invitar usuarios y asignar permisos.",
+      description: "Crear usuarios, asignar roles y restablecer contraseñas.",
       icon: UsersIcon,
-      soon: true,
     });
   }
 
