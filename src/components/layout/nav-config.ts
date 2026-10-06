@@ -50,7 +50,7 @@ export const NAV_GROUPS: NavGroup[] = [
   },
   {
     label: "Análisis",
-    items: [{ href: "/reports", label: "Reportes", icon: BarChart3Icon, comingSoon: true }],
+    items: [{ href: "/reports", label: "Reportes", icon: BarChart3Icon }],
   },
   {
     label: "Administración",
