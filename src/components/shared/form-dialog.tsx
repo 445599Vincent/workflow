@@ -24,6 +24,7 @@ type FormDialogProps = {
   pending: boolean;
   error: string | null;
   submitLabel: string;
+  submitVariant?: "default" | "destructive";
   children: React.ReactNode;
 };
 
@@ -38,6 +39,7 @@ export function FormDialog({
   pending,
   error,
   submitLabel,
+  submitVariant,
   children,
 }: FormDialogProps) {
   return (
@@ -57,7 +59,7 @@ export function FormDialog({
                 Cancelar
               </Button>
             </DialogClose>
-            <SubmitButton pending={pending} pendingText="Guardando…">
+            <SubmitButton pending={pending} pendingText="Guardando…" variant={submitVariant}>
               {submitLabel}
             </SubmitButton>
           </DialogFooter>

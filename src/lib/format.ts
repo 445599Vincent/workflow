@@ -106,3 +106,23 @@ export function formatPlainDate(value: string | null | undefined): string {
   const [year, month, day] = value.split("-");
   return year && month && day ? `${day}/${month}/${year}` : value;
 }
+
+/** Elapsed time between two instants: "3 días 4 h", "5 h 20 min", "12 min". */
+export function formatDuration(
+  from: string | Date | null | undefined,
+  to: string | Date = new Date(),
+): string {
+  if (!from) return "—";
+  const minutes = Math.max(
+    0,
+    Math.round((new Date(to).getTime() - new Date(from).getTime()) / 60000),
+  );
+  const days = Math.floor(minutes / 1440);
+  const hours = Math.floor((minutes % 1440) / 60);
+  if (days > 0)
+    return hours > 0
+      ? `${days} ${days === 1 ? "día" : "días"} ${hours} h`
+      : `${days} ${days === 1 ? "día" : "días"}`;
+  if (hours > 0) return minutes % 60 > 0 ? `${hours} h ${minutes % 60} min` : `${hours} h`;
+  return `${minutes} min`;
+}
