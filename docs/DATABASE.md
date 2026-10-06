@@ -271,6 +271,11 @@ Nadie puede modificar ni borrar registros de auditoría.
 | `void_consumption(consumo, motivo)` / `void_waste(merma, motivo)` | sí | Anulación (`inventory.void`): movimiento `return` al costo congelado del registro, `voided_*`, caches de línea y costo real descontados (D-028). Con OT, solo En producción / En instalación. |
 | `register_warehouse_waste(material, cantidad, motivo, nota)` | sí | Merma sin OT (`inventory.adjust`); solo del disponible y sin excepción de negativo (D-029). |
 | `reverse_material_usage(...)` | **no** | Interna de las anulaciones (012). |
+| `report_usage_by_material(desde, hasta)` | sí | REP-03. Consumo y merma por material en el período (sin anulados). |
+| `report_orders_cost(desde, hasta)` | sí | REP-04. Órdenes terminadas en el período: estimado, real, merma, variación. |
+| `report_usage_by_customer(desde, hasta)` | sí | REP-05. Costo de consumo y merma por cliente de la OT. |
+| `get_alerts()` | sí | ALR-01…04 calculadas al consultar: tipo, severidad, entidad, detalle. |
+| `business_period(desde, hasta)` | sí | Rango `[inicio, fin)` en la zona horaria del negocio; por defecto, el mes en curso. |
 
 ## 6. Vistas
 
@@ -280,6 +285,9 @@ Todas con `security_invoker = true` (respetan RLS del usuario).
   `stock_available`, `inventory_value` (= físico × costo promedio) y
   `stock_status` (`out`, `low`, `ok`, `inactive`). Base de la tabla de inventario.
 - `material_kardex` — movimientos + número de OT + nombre del usuario + código, nombre y unidad del material (009). Base del kardex por material y del listado global de movimientos.
+- `usage_records` — consumos y mermas **no anulados** (013). Única definición de "lo usado" para reportes, alertas y dashboard (D-030).
+
+Las funciones de reportes y alertas (013) son `security invoker`: respetan RLS.
 
 ## 7. Políticas RLS (resumen)
 
@@ -315,6 +323,7 @@ Todas con `security_invoker = true` (respetan RLS del usuario).
 | `…_010_profile_password_change.sql` | `profiles.must_change_password` y su regla en el trigger de perfiles. |
 | `…_011_work_order_execution.sql` | Ejecución de órdenes: `is_planned` y `actual_cost` en líneas, reglas de transición de estado, timeline de planificación y RPC de reserva, liberación, consumo, merma y cambio de estado. |
 | `…_012_usage_voiding_warehouse_waste.sql` | Anulación de consumos y mermas (devolución al costo original) y merma de almacén. |
+| `…_013_reports_alerts.sql` | Vista `usage_records`, funciones de reportes y alertas; dashboard sin consumos anulados. |
 
 **Regla para nuevas migraciones:** nunca editar una migración ya aplicada en un
 entorno; crear una nueva. Toda tabla nueva debe activar RLS y otorgar permisos

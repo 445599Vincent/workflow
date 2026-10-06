@@ -57,14 +57,16 @@ antes de continuar. Leyenda: ✅ hecho · 🟡 parcial · ⬜ pendiente.
 - ✅ Merma de almacén sin orden, solo del disponible
 - ✅ Filtro "Asignadas a mí" en órdenes
 
-## Fase 4 — Analítica ⬜
+## Fase 4 — Analítica 🟡
 
-- ⬜ Dashboard completo (costo estimado vs real, materiales de mayor consumo, gráficos)
-- ⬜ Centro de alertas (ALR-01…04)
-- ⬜ Reportes: inventario actual, bajo mínimo, consumo por período/material/orden/cliente,
-  merma por material/orden, costo por orden, estimado vs real, movimientos
-- ⬜ Exportación a Excel/CSV
-- ⬜ Visor de auditoría
+- ✅ Migración 013: vista `usage_records` (sin anulados), reportes, `get_alerts`; el dashboard ya no cuenta lo anulado (D-030)
+- ✅ Centro de alertas (ALR-01…04) y resumen de alertas en el dashboard
+- ✅ Reportes: consumo por material, costo por orden (estimado vs real), consumo por cliente, inventario actual
+- ✅ Exportación a Excel (CSV con los mismos filtros, D-031)
+- ✅ Inventario: valor por categoría, bajo mínimo y sin existencia
+- ✅ Visor de auditoría (`audit.view`)
+- ⬜ Gráficos en el dashboard (tendencia de consumo y merma por mes)
+- ⬜ Exportación CSV del listado de movimientos y de mermas
 
 ## Fase 5 — Funcionalidades avanzadas ⬜
 
@@ -77,10 +79,10 @@ antes de continuar. Leyenda: ✅ hecho · 🟡 parcial · ⬜ pendiente.
 
 ## Siguiente paso recomendado
 
-1. Aplicar las migraciones 011 y 012 en Supabase de producción (README → Actualizar una base ya instalada).
+1. Aplicar las migraciones 011, 012 y 013 en Supabase de producción (README → Actualizar una base ya instalada).
 2. Validar con producción el flujo completo de una orden real: planificar, reservar, consumir,
    registrar merma y terminar; revisar el costo real contra lo esperado.
-3. Fase 4: reportes, alertas y dashboard de costos.
+3. Completar la Fase 4 (gráficos) y definir con el negocio las prioridades de la Fase 5.
 
 ## Pendientes de decisión con el negocio
 
