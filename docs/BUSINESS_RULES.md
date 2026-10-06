@@ -73,7 +73,7 @@ COMPRA / ENTRADA → EXISTENCIA → RESERVA → ORDEN DE TRABAJO → CONSUMO REA
 |----|-------|
 | OT-01 | Número automático OT-000001. Datos: cliente, nombre del trabajo, descripción, fecha requerida, responsable, prioridad, estado. |
 | OT-02 | Estados: Borrador → Pendiente → Planificada → En producción → En instalación → Terminada. Cancelada desde cualquier estado no terminado. |
-| OT-03 | Transiciones permitidas: hacia adelante, retroceso de un paso por supervisor, y cancelación. Una OT Terminada o Cancelada es de solo lectura (reapertura: solo administrador con `work_orders.reopen`, auditada). Ya garantizado en BD: Terminada/Cancelada solo vía las RPC de cierre/cancelación (Fase 3). |
+| OT-03 | Transiciones: hacia adelante (se puede saltar etapas), retroceso de **un** paso, y cancelación desde cualquier estado no terminado (con motivo). Solo se termina desde *En producción* o *En instalación*. Una OT Terminada o Cancelada es de solo lectura; reabrirla requiere `work_orders.reopen` (Administrador) y la deja *En producción*. El estado solo cambia mediante la función `change_work_order_status` (las reglas viven en la BD). |
 | OT-04 | Todo cambio de estado se registra en el timeline (`work_order_events`) con usuario y fecha. |
 | OT-05 | Una OT está **atrasada** si `fecha requerida < hoy` y su estado no es Terminada ni Cancelada. |
 | OT-06 | La duración de una OT = `completed_at − started_at` (inicio = primera vez que pasa a *En producción*). |
@@ -91,7 +91,7 @@ COMPRA / ENTRADA → EXISTENCIA → RESERVA → ORDEN DE TRABAJO → CONSUMO REA
 
 | ID | Regla |
 |----|-------|
-| RES-01 | Se puede reservar material para una OT en estado Pendiente, Planificada, En producción o En instalación. |
+| RES-01 | Se puede reservar material **planificado** de una OT en estado Pendiente, Planificada, En producción o En instalación (`work_orders.reserve`). |
 | RES-02 | Solo se reserva hasta el stock **disponible** (INV-04). |
 | RES-03 | Una reserva aumenta `stock_reserved` (movimiento `reservation`); no cambia el físico. |
 | RES-04 | Liberar una reserva (total o parcial) genera `reservation_release`. |
@@ -103,10 +103,10 @@ COMPRA / ENTRADA → EXISTENCIA → RESERVA → ORDEN DE TRABAJO → CONSUMO REA
 | ID | Regla |
 |----|-------|
 | CON-01 | Consumo = material **útil** realmente utilizado en el trabajo. Se registra durante *En producción* o *En instalación*. |
-| CON-02 | Puede registrarse consumo de un material no planificado (queda marcado como "no planificado"). |
+| CON-02 | Puede registrarse consumo o merma de un material no planificado: se agrega a la OT como línea "no planificada" (estimado 0), para que su costo cuente en el real y la diferencia sea visible. |
 | CON-03 | Variación = (consumo + merma) − estimado. Variación % = variación / estimado × 100. |
 | CON-04 | Si la variación % supera `consumption_variance_alert_pct` (10 % por defecto) se resalta en rojo y genera alerta. Si es menor que el estimado se resalta como ahorro. |
-| CON-05 | Un consumo se anula con motivo; la anulación genera una devolución (`return`) al stock al mismo costo. |
+| CON-05 | Un consumo se anula con motivo; la anulación genera una devolución (`return`) al stock al mismo costo. *(Pendiente: Fase 3b.)* |
 
 ### 6.4 Mermas (MER)
 
@@ -116,7 +116,7 @@ COMPRA / ENTRADA → EXISTENCIA → RESERVA → ORDEN DE TRABAJO → CONSUMO REA
 | MER-02 | La merma descuenta stock físico (movimiento `waste`) y suma al costo real de la OT. |
 | MER-03 | Ejemplo: se usaron 11.3 m² en total → consumo útil 10.5 m² + merma 0.8 m². Total = 11.3 m², comparado contra el estimado de 10 m² → +13 %. |
 | MER-04 | Motivos: Error de impresión, Corte, Daño, Prueba, Instalación, Defecto, Otro (Otro exige observación). |
-| MER-05 | Merma de almacén (sin OT) es válida (p. ej. material dañado por humedad). |
+| MER-05 | Merma de almacén (sin OT) es válida (p. ej. material dañado por humedad). *(Pendiente: Fase 3b; mientras tanto se registra como ajuste negativo.)* |
 | MER-06 | Alerta de merma considerable: merma de una OT > `waste_alert_pct` (5 % por defecto) del consumo total de ese material. |
 
 ### 6.5 Cierre (CIE)
@@ -124,7 +124,7 @@ COMPRA / ENTRADA → EXISTENCIA → RESERVA → ORDEN DE TRABAJO → CONSUMO REA
 | ID | Regla |
 |----|-------|
 | CIE-01 | Al pasar a Terminada se muestra el resumen: costo estimado, costo real, variación RD$ y %, materiales utilizados, merma, responsable y duración. |
-| CIE-02 | Al cerrar: se liberan reservas sobrantes, se fija `actual_material_cost` y `completed_at`. |
+| CIE-02 | El costo real (`actual_material_cost`) se actualiza en vivo con cada consumo y merma. Al cerrar: se liberan las reservas sobrantes y se fija `completed_at`; como ya no se aceptan consumos, el costo real queda definitivo. |
 | CIE-03 | Después del cierre no se aceptan consumos ni mermas (salvo reapertura auditada). |
 
 ## 7. Retazos (RET) — preparado, Fase 5
