@@ -45,3 +45,14 @@ export const optionalText = (max: number) =>
     .trim()
     .max(max, `Máximo ${max} caracteres.`)
     .transform((value) => (value === "" ? null : value));
+
+/** True when a decimal text has more decimal places than the unit allows. */
+export function exceedsDecimals(value: string, decimals: number): boolean {
+  const fraction = value.trim().split(".")[1] ?? "";
+  return fraction.replace(/0+$/, "").length > decimals;
+}
+
+/** "solo números enteros" / "hasta 2 decimales" */
+export function decimalsHint(decimals: number): string {
+  return decimals === 0 ? "solo números enteros" : `hasta ${decimals} decimales`;
+}
