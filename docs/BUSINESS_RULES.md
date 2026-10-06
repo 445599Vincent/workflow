@@ -170,6 +170,15 @@ notificaciones hasta definir canales (correo, push).
 | `users.manage` | ✔ | | | | |
 | `settings.manage` | ✔ | | | | |
 
+## 9.1 Usuarios (USR)
+
+| ID | Regla |
+|----|-------|
+| USR-01 | Solo el Administrador (`users.manage`) crea usuarios, cambia roles, activa/desactiva y restablece contraseñas. |
+| USR-02 | Un usuario nuevo o con contraseña restablecida recibe una contraseña temporal y debe elegir una nueva antes de usar el sistema. |
+| USR-03 | Nadie puede cambiar su propio rol ni desactivarse (evita quedarse sin administrador). |
+| USR-04 | Los usuarios no se borran: se desactivan. Un usuario inactivo no puede ingresar ni ver datos, y su historial (movimientos, auditoría) se conserva con su nombre. |
+
 ## 10. Auditoría (AUD)
 
 | ID | Regla |

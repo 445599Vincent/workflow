@@ -67,6 +67,7 @@ Permisos en formato `modulo.accion` (ver BUSINESS_RULES §9).
 **`profiles`** — 1:1 con `auth.users`.
 `id uuid PK → auth.users(id) on delete cascade`, `email`, `full_name`,
 `role_code → roles (default 'viewer')`, `is_active (default true)`, `phone`,
+`must_change_password` (010: contraseña temporal pendiente de cambiar),
 campos de auditoría. Se crea automáticamente con el trigger `on_auth_user_created`.
 Como otras tablas referencian `profiles` con `on delete restrict`, un usuario con
 actividad no puede borrarse: se desactiva.
@@ -300,6 +301,7 @@ Todas con `security_invoker = true` (respetan RLS del usuario).
 | `…_007_rls_grants.sql` | Activación de RLS, grants por columna y políticas. |
 | `…_008_receipt_voiding.sql` | `void_inventory_receipt` (anulación de entradas). |
 | `…_009_kardex_material_columns.sql` | Columnas del material en `material_kardex`. |
+| `…_010_profile_password_change.sql` | `profiles.must_change_password` y su regla en el trigger de perfiles. |
 
 **Regla para nuevas migraciones:** nunca editar una migración ya aplicada en un
 entorno; crear una nueva. Toda tabla nueva debe activar RLS y otorgar permisos

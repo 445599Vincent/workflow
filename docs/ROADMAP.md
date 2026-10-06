@@ -9,7 +9,7 @@ antes de continuar. Leyenda: ✅ hecho · 🟡 parcial · ⬜ pendiente.
 - ✅ `docs/ARCHITECTURE.md`, `docs/DATABASE.md`, `docs/BUSINESS_RULES.md`, `docs/ROADMAP.md`
 - ✅ README actualizado
 
-## Fase 1 — Fundación 🟡
+## Fase 1 — Fundación ✅
 
 - ✅ Proyecto Next.js 16 + TypeScript estricto + Tailwind 4 + shadcn/ui
 - ✅ Paleta y tokens de diseño de Workflow
@@ -19,7 +19,7 @@ antes de continuar. Leyenda: ✅ hecho · 🟡 parcial · ⬜ pendiente.
 - ✅ Esquema inicial completo (migraciones 001–007) con RLS y RPC de inventario (entradas y ajustes listos en BD; falta su interfaz)
 - ✅ Roles y permisos en base de datos; permisos expuestos a la UI
 - ✅ Dashboard inicial (KPIs reales desde `get_dashboard_summary`)
-- ⬜ Pantalla de Usuarios (invitar, asignar rol, desactivar) — por ahora vía panel de Supabase + SQL (ver README)
+- ✅ Pantalla de Usuarios: crear con contraseña temporal, asignar rol, activar/desactivar, restablecer contraseña
 - ✅ CI en GitHub Actions (formato, lint, typecheck, build, migraciones y pruebas de BD)
 
 ## Fase 2 — Inventario ✅
@@ -32,7 +32,7 @@ antes de continuar. Leyenda: ✅ hecho · 🟡 parcial · ⬜ pendiente.
 - ✅ Ajustes de inventario con motivo, vista previa y excepción de stock negativo solo para administrador
 - ✅ Movimientos: libro mayor global con búsqueda y filtros por tipo y fecha
 - ✅ Anulación de entradas (`void_inventory_receipt`, con motivo y reverso del costo promedio)
-- ✅ Pruebas automáticas de reglas de base de datos (`supabase/tests/inventory_rules_test.sql`, 59 aserciones, en CI)
+- ✅ Pruebas automáticas de reglas de base de datos (`supabase/tests/inventory_rules_test.sql`, 61 aserciones, en CI)
 
 ## Fase 3 — Órdenes de trabajo ⬜
 
@@ -65,7 +65,7 @@ antes de continuar. Leyenda: ✅ hecho · 🟡 parcial · ⬜ pendiente.
 
 1. Crear el proyecto Supabase de producción, aplicar migraciones y crear el primer administrador (README).
 2. Conectar Vercel y validar con el equipo de almacén el flujo completo de inventario con datos reales.
-3. Pantalla de Usuarios (cierra la Fase 1) y comenzar la Fase 3: órdenes de trabajo.
+3. Comenzar la Fase 3: clientes y órdenes de trabajo (crear, planificar materiales, estados).
 
 ## Pendientes de decisión con el negocio
 
