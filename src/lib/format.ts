@@ -86,3 +86,23 @@ export function initials(name: string): string {
     .join("")
     .toUpperCase();
 }
+
+/** Today's date (YYYY-MM-DD) in the business time zone. */
+export function todayISODate(): string {
+  return new Intl.DateTimeFormat("en-CA", { timeZone: TIME_ZONE }).format(new Date());
+}
+
+/** "lunes, 5 de octubre de 2026" */
+export function formatLongDate(value: Date = new Date()): string {
+  return new Intl.DateTimeFormat(LOCALE, { dateStyle: "full", timeZone: TIME_ZONE }).format(value);
+}
+
+/**
+ * Dates without time (e.g. due dates "2026-10-05") must not be shifted by the
+ * time zone: format them from their parts.
+ */
+export function formatPlainDate(value: string | null | undefined): string {
+  if (!value) return "—";
+  const [year, month, day] = value.split("-");
+  return year && month && day ? `${day}/${month}/${year}` : value;
+}
