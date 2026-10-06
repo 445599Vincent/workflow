@@ -42,7 +42,7 @@ export const NAV_GROUPS: NavGroup[] = [
       },
       { href: "/inventory", label: "Inventario", icon: BoxesIcon, comingSoon: true },
       { href: "/materials", label: "Materias primas", icon: PackageIcon },
-      { href: "/movements", label: "Movimientos", icon: ArrowLeftRightIcon, comingSoon: true },
+      { href: "/movements", label: "Movimientos", icon: ArrowLeftRightIcon },
       { href: "/receipts", label: "Compras / Entradas", icon: PackagePlusIcon },
       { href: "/suppliers", label: "Proveedores", icon: TruckIcon },
     ],
