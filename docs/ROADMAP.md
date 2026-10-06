@@ -68,18 +68,20 @@ antes de continuar. Leyenda: ✅ hecho · 🟡 parcial · ⬜ pendiente.
 - ✅ Migración 014 y gráficos en el dashboard: consumo y merma por mes, estimado vs real de órdenes terminadas (D-032)
 - ✅ Exportación CSV de los listados de Movimientos y Mermas
 
-## Fase 5 — Funcionalidades avanzadas ⬜
+## Fase 5 — Funcionalidades avanzadas 🟡
 
 - ⬜ Retazos (tabla `remnants` ya creada)
 - ⬜ Códigos QR para materiales y retazos
 - ⬜ Adjuntos con Supabase Storage (tabla `attachments` ya creada)
-- ⬜ Importación desde Excel (catálogo inicial de materiales)
+- ✅ Importación desde Excel/CSV del catálogo de materiales con existencia inicial (migración 015, D-033)
+- ✅ Edición de umbrales de alertas en Configuración
+- ✅ Página clara de "configuración incompleta" si faltan las variables de Supabase
 - ⬜ Conversiones de unidades (tabla `unit_conversions` ya creada)
 - ⬜ Integración ADM Cloud (requiere documentación técnica real)
 
 ## Siguiente paso recomendado
 
-1. Aplicar las migraciones 011 a 014 en Supabase de producción (README → Actualizar una base ya instalada).
+1. Aplicar la migración 015 en Supabase de producción y cargar el catálogo real con **Materias primas → Importar**.
 2. Validar con producción el flujo completo de una orden real: planificar, reservar, consumir,
    registrar merma y terminar; revisar el costo real contra lo esperado.
 3. Definir con el negocio las prioridades de la Fase 5 (retazos, QR, adjuntos, importación desde Excel, ADM Cloud).

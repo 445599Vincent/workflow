@@ -275,6 +275,7 @@ Nadie puede modificar ni borrar registros de auditoría.
 | `report_orders_cost(desde, hasta)` | sí | REP-04. Órdenes terminadas en el período: estimado, real, merma, variación. |
 | `report_usage_by_customer(desde, hasta)` | sí | REP-05. Costo de consumo y merma por cliente de la OT. |
 | `get_alerts()` | sí | ALR-01…04 calculadas al consultar: tipo, severidad, entidad, detalle. |
+| `import_materials(filas, crear_catálogos)` | sí | IMP. Valida todas las filas y crea los materiales con `create_material` en una sola transacción; opcionalmente crea categorías y ubicaciones (`catalog.manage`). |
 | `report_monthly_trend(meses)` | sí | REP-08. Por mes: costo de consumo y merma (sin anulados) y estimado vs real de las órdenes terminadas. |
 | `business_period(desde, hasta)` | sí | Rango `[inicio, fin)` en la zona horaria del negocio; por defecto, el mes en curso. |
 
@@ -326,6 +327,7 @@ Las funciones de reportes y alertas (013) son `security invoker`: respetan RLS.
 | `…_012_usage_voiding_warehouse_waste.sql` | Anulación de consumos y mermas (devolución al costo original) y merma de almacén. |
 | `…_013_reports_alerts.sql` | Vista `usage_records`, funciones de reportes y alertas; dashboard sin consumos anulados. |
 | `…_014_monthly_trend.sql` | `report_monthly_trend` para los gráficos del dashboard. |
+| `…_015_material_import.sql` | `import_materials`: importación de materiales todo o nada. |
 
 **Regla para nuevas migraciones:** nunca editar una migración ya aplicada en un
 entorno; crear una nueva. Toda tabla nueva debe activar RLS y otorgar permisos
